@@ -2,6 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Search, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import  "@/actions/db_init"
 
 export default function Home() {
   return (
