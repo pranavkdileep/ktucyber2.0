@@ -46,6 +46,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userData, onLogout })
       >
         Logout
       </button>
+      
     </div>
   );
 };

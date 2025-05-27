@@ -30,7 +30,8 @@ export default function Page() {
     setIsSubmitting(true);
     const response = await loginUser(data);
     setLoginResponse(response);
-    if (loginResponse?.success) {
+    console.log("Login response:", response);
+    if (response?.success) {
       console.log("Login successful, redirecting to dashboard...");
       redirect('/user/dashboard')
     }
