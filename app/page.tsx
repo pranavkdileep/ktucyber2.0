@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Search, Menu } from "lucide-react"
-//import  "@/actions/db_init"
+import  "@/actions/db_init"
 
 export default function Home() {
   return (

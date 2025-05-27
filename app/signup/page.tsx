@@ -5,9 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, SignupFormData } from "@/lib/schemas";
 import { useState } from "react";
+import { signupUser } from "@/actions/auth";
 
 
-interface SigupResponse {
+export interface SigupResponse {
   success: boolean;
   message: string;
 }
@@ -26,13 +27,9 @@ export default function Page() {
     // Handle form submission logic here
     console.log("Form submitted:", data);
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
+    setSignupResponse(await signupUser(data));
     setIsSubmitting(false);
-    setSignupResponse({
-      success: false,
-      message: "Signup successful! Welcome aboard.",
-    });
-    // You can send the data to your API or perform any other actions
+    
   }
   return (
     <div className="flex flex-col min-h-screen px-4 sm:px-40">
