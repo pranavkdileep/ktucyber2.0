@@ -36,7 +36,23 @@ export async function verifyToken(): Promise<{ success: boolean; payload?:JWTPay
     }
 }
 
-
+export async function logoutUser(): Promise<{ success: boolean; message: string }> {
+    try {
+        const cookieStore = cookies();
+        // Remove the cookie by setting its maxAge to -1 or expires to a past date
+        cookieStore.set({
+            name: COOKIE_NAME,
+            value: '',
+            httpOnly: true,
+            path: '/',
+            maxAge: -1, // Or use expires: new Date(0)
+        });
+        return { success: true, message: 'Logged out successfully' };
+    } catch (error) {
+        console.error('Error logging out:', error);
+        return { success: false, message: `Error logging out: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
 
 export async function signupUser(data: SignupFormData): Promise<{ success: boolean; message: string }> {
     try {
