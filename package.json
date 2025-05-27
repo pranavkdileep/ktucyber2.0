@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -17,7 +18,9 @@
     "postgres": "^3.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.3.0"
+    "react-hook-form": "^7.56.4",
+    "tailwind-merge": "^3.3.0",
+    "zod": "^3.25.30"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
