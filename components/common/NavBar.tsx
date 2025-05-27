@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Menu, UserRound } from "lucide-react";
+import { Search, Menu, UserRound, X } from "lucide-react";
 import { verifyToken, logoutUser } from "../../actions/auth";
 import { Button } from "@/components/ui/button";
 import ProfileDropdown from "./ProfileDropdown";
@@ -13,6 +13,7 @@ function NavBar() {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -156,8 +157,8 @@ function NavBar() {
 
               {/* Mobile navigation */}
               <div className="sm:hidden flex items-center">
-                <Button variant="ghost" size="sm" className="p-1 mr-2"> {/* Menu icon button */}
-                  <Menu className="h-5 w-5" />
+                <Button variant="ghost" size="sm" className="p-1 mr-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}> {/* Menu icon button */}
+                  {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </Button>
                 {isAuthenticated ? (
                   <div className="relative" ref={dropdownRef}> {/* Assign ref here as well for mobile */}
@@ -189,28 +190,42 @@ function NavBar() {
 
           {/* Mobile navigation links - always visible for now */}
           {/* Consider if these links should be hidden or adjusted when user is authenticated */}
-          <div className="flex sm:hidden justify-between mt-3 pb-1 overflow-x-auto">
-            <Link
-              href="/"
-              className="text-[#121417] font-medium text-sm whitespace-nowrap px-3 py-1 bg-[#f0f2f5] rounded-full"
-            >
-              Home
-            </Link>
-            <Link
-              href="/explore"
-              className="text-[#61758a] hover:text-[#121417] text-sm whitespace-nowrap px-3 py-1 ml-2"
-            >
-              Explore
-            </Link>
-            <Link
-              href="/upload"
-              className="text-[#61758a] hover:text-[#121417] text-sm whitespace-nowrap px-3 py-1 ml-2"
-            >
-              Upload
-            </Link>
-          </div>
+          {/* REMOVED original mobile nav links container, content moved below */}
         </div>
       </header>
+      {/* Collapsible Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="absolute w-full sm:hidden border-t border-[#e5e8eb] bg-white shadow-lg z-20">
+          <div className="container mx-auto px-4 py-3">
+            <nav className="flex flex-col space-y-2 mb-4"> {/* Reduced space-y slightly for a tighter look */}
+              <Link href="/" className="text-[#121417] font-medium text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"> {/* Adjusted padding & hover */}
+                Home
+              </Link>
+              <Link
+                href="/explore"
+                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"  // Adjusted padding & hover
+              >
+                Explore
+              </Link>
+              <Link
+                href="/upload"
+                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"  // Adjusted padding & hover
+              >
+                Upload
+              </Link>
+            </nav>
+            {/* Search bar within mobile menu */}
+            <div className="flex items-center relative rounded-full bg-[#f0f2f5] px-3 py-2 w-full"> {/* Adjusted padding for search bar */}
+              <Search className="h-5 w-5 text-[#61758a]" /> {/* Slightly larger search icon */}
+              <input
+                type="text"
+                placeholder="Search"
+                className="bg-transparent border-none outline-none pl-2.5 text-sm text-[#121417] placeholder-[#61758a] w-full" // Adjusted padding
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
