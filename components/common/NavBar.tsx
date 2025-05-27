@@ -1,9 +1,72 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, Menu } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Menu, UserRound } from "lucide-react";
+import { verifyToken, logoutUser } from "../../actions/auth";
 import { Button } from "@/components/ui/button";
+import ProfileDropdown from "./ProfileDropdown";
 
 function NavBar() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const router = useRouter();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const response = await verifyToken();
+      if (response.success) {
+        setIsAuthenticated(true);
+        setUserData(response.payload);
+      } else {
+        setIsAuthenticated(false);
+        setUserData(null);
+      }
+    };
+    checkAuthStatus();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  const handleLogout = async () => {
+    try {
+      console.log("Logging out user...");
+      const result = await logoutUser();
+      if (result.success) {
+        setIsAuthenticated(false);
+        setUserData(null);
+        setIsDropdownOpen(false);
+        router.push('/');
+        router.refresh(); // Important to re-fetch server components and update state
+      } else {
+        // Handle logout failure, e.g., show a notification
+        console.error("Logout failed:", result.message);
+        // Optionally, inform the user
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Optionally, inform the user
+    }
+  };
+
   return (
     <div>
       <header className="sticky top-0 z-10 bg-white border-b border-[#e5e8eb]">
@@ -56,35 +119,75 @@ function NavBar() {
                 />
               </div>
 
-              <div className="hidden sm:flex items-center space-x-2">
-                <Link href="/signup">
-                  <Button className="bg-[#3d99f5] hover:bg-[#3d99f5]/90 text-white rounded-full px-4 py-2 text-sm">
-                    Sign up
-                  </Button>
-                </Link>
-                <Link href="/login">
+              {isAuthenticated ? (
+                <div className="relative hidden sm:block" ref={dropdownRef}>
                   <Button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     variant="ghost"
-                    className="text-[#121417] hover:bg-[#f0f2f5] rounded-full px-4 py-2 text-sm"
+                    className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
                   >
-                    Log in
+                    <UserRound className="h-6 w-6 text-[#121417]" />
                   </Button>
-                </Link>
-              </div>
+                  {isDropdownOpen && (
+                    <ProfileDropdown
+                      userData={userData}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="hidden sm:flex items-center space-x-2">
+                  <Link href="/signup">
+                    <Button className="bg-[#3d99f5] hover:bg-[#3d99f5]/90 text-white rounded-full px-4 py-2 text-sm">
+                      Sign up
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button
+                      variant="ghost"
+                      className="text-[#121417] hover:bg-[#f0f2f5] rounded-full px-4 py-2 text-sm"
+                    >
+                      Log in
+                    </Button>
+                  </Link>
+                </div>
+              )}
 
               {/* Mobile navigation */}
               <div className="sm:hidden flex items-center">
-                <Button variant="ghost" size="sm" className="p-1 mr-2">
+                <Button variant="ghost" size="sm" className="p-1 mr-2"> {/* Menu icon button */}
                   <Menu className="h-5 w-5" />
                 </Button>
-                <Button className="bg-[#3d99f5] hover:bg-[#3d99f5]/90 text-white rounded-full px-3 py-1 text-xs">
-                  Sign up
-                </Button>
+                {isAuthenticated ? (
+                  <div className="relative" ref={dropdownRef}> {/* Assign ref here as well for mobile */}
+                    <Button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      variant="ghost"
+                      className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    >
+                      <UserRound className="h-6 w-6 text-[#121417]" />
+                    </Button>
+                    {isDropdownOpen && (
+                      <ProfileDropdown
+                        userData={userData}
+                        onLogout={handleLogout}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  // Ensure Link is used for navigation, not just a Button if it's meant to navigate
+                  <Link href="/signup"> 
+                    <Button className="bg-[#3d99f5] hover:bg-[#3d99f5]/90 text-white rounded-full px-3 py-1 text-xs">
+                      Sign up
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
 
           {/* Mobile navigation links - always visible for now */}
+          {/* Consider if these links should be hidden or adjusted when user is authenticated */}
           <div className="flex sm:hidden justify-between mt-3 pb-1 overflow-x-auto">
             <Link
               href="/"
