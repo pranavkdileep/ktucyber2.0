@@ -38,9 +38,12 @@ export async function verifyToken(): Promise<{ success: boolean; payload?:JWTPay
 
 export async function logoutUser(): Promise<{ success: boolean; message: string }> {
     try {
+        console.log('Logging out user...');
         const cookieStore = cookies();
         // Remove the cookie by setting its maxAge to -1 or expires to a past date
-        cookieStore.set({
+        (await
+            // Remove the cookie by setting its maxAge to -1 or expires to a past date
+            cookieStore).set({
             name: COOKIE_NAME,
             value: '',
             httpOnly: true,

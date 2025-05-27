@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ function NavBar() {
 
   const handleLogout = async () => {
     try {
+      console.log("Logging out user...");
       const result = await logoutUser();
       if (result.success) {
         setIsAuthenticated(false);
