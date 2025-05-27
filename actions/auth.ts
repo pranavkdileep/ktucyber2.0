@@ -2,8 +2,7 @@
 import { sql } from "@/lib/db";
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { signupSchema, SignupFormData } from "@/lib/schemas";
-import { User } from "@/lib/schemas";
+import { signupSchema, SignupFormData, LoginFormData, loginSchema } from "@/lib/schemas";
 import bcrypt from 'bcrypt';
 
 
@@ -89,5 +88,44 @@ export async function signupUser(data: SignupFormData): Promise<{ success: boole
     }
 }
 
+export async function loginUser(data : LoginFormData): Promise<{ success: boolean; message: string }> {
+    try {
+        const parsedData = loginSchema.safeParse(data);
+        if (!parsedData.success) {
+            return { success: false, message: 'Invalid input data' };
+        }
+        const { email, password } = parsedData.data;
+        const user = await sql`SELECT * FROM users WHERE email = ${email} OR username = ${email}`;
+        if (user.length === 0) {
+            return { success: false, message: 'User not found' };
+        }
+        const isPasswordValid = await bcrypt.compare(password, user[0].password_hash);
+        if (!isPasswordValid) {
+            return { success: false, message: 'Invalid password' };
+        }
+        const token = await signToken({
+            id: user[0].id,
+            firstName: user[0].first_name,
+            lastName: user[0].last_name,
+            email: user[0].email,
+            username: user[0].username,
+            isActive: user[0].is_active,
+            isEmailVerified: user[0].is_verified,
+            roles: user[0].user_role as 'user' | 'admin' | 'superadmin'
+        }, EXPIRATION_TIME);
+        const cookieStore = cookies();
+        (await cookieStore).set({
+            name: COOKIE_NAME,
+            value: token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
+        return { success: true, message: 'Login successful Redirecting' };
+    } catch (error) {
+        console.error('Error logging in:', error);
+        return { success: false, message: `Error logging in: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
 
 
