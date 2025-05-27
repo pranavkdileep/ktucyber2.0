@@ -11,7 +11,7 @@ const encoder = new TextEncoder();
 const SECRET = process.env.JWT_SECRET || 'defaultsecretkey';
 const SECRET_BYTES = encoder.encode(SECRET);
 const EXPIRATION_TIME = '2h';
-export const COOKIE_NAME = 'auth_token';
+const COOKIE_NAME = 'auth_token';
 
 export async function signToken(
     payload: JWTPayload,
