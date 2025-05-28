@@ -32,7 +32,7 @@ export default function Page() {
     setLoginResponse(response);
     console.log("Login response:", response);
     if (response?.success) {
-      console.log("Login successful!, redirecting to dashboard...");
+      console.log("Login successful, redirecting to dashboard...");
       redirect('/user/dashboard')
     }
     setIsSubmitting(false);
