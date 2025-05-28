@@ -2,7 +2,7 @@
 import { sql } from "@/lib/db";
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { signupSchema, SignupFormData, LoginFormData, loginSchema } from "@/lib/schemas";
+import { signupSchema, SignupFormData, LoginFormData, loginSchema, ForgotPasswordFormData, forgotPasswordSchema, ResetPasswordFormData, resetPasswordSchema } from "@/lib/schemas";
 import bcrypt from 'bcrypt';
 
 
@@ -26,6 +26,10 @@ export async function verifyToken(): Promise<{ success: boolean; payload?:JWTPay
     try {
         const cookieStore = cookies();
         const token = (await cookieStore).get(COOKIE_NAME)?.value;
+        if (!token) {
+            console.error('No auth token in cookies');
+            return { success: false };
+        }
         const { payload } = await jwtVerify(token!, SECRET_BYTES, {
             algorithms: ['HS256']
         });
@@ -35,20 +39,99 @@ export async function verifyToken(): Promise<{ success: boolean; payload?:JWTPay
         return { success: false, payload: undefined };
     }
 }
+export async function verifyEmailVerificationToken(token: string): Promise<{ success: boolean; message: string }> {
+    try{
+        const { payload } = await jwtVerify(token, SECRET_BYTES, {
+            algorithms: ['HS256']
+        });
+        if (!payload || !payload.id || !payload.email) {
+            return { success: false, message: 'Invalid token' };
+        }
+        const user = await sql`SELECT * FROM users WHERE id = ${payload.id as string} AND email = ${payload.email as string}`;
+        if (user.length === 0) {
+            return { success: false, message: 'User not found' };
+        }
+        await sql`
+            UPDATE users
+            SET is_verified = TRUE, verification_token_jwt = NULL
+            WHERE id = ${payload.id as string}
+        `;
+        return { success: true, message: 'Email verified successfully' };
+    }catch(error) {
+        console.error('Error verifying email verification token:', error);
+        return { success: false, message: `Error verifying token: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
+
+export async function sendPasswordReset(data: ForgotPasswordFormData):Promise<{ success: boolean; message: string }> {
+    try {
+        const parsedData = forgotPasswordSchema.safeParse(data);
+        if (!parsedData.success) {
+            return { success: false, message: 'Invalid input data' };
+        }
+        const { email } = parsedData.data;
+        const user = await sql`SELECT * FROM users WHERE email = ${email}`;
+        if (user.length === 0) {
+            return { success: false, message: 'User not found' };
+        }
+        const resetToken = await signToken({ id: user[0].id, email }, '1h');
+        // Here you would send the resetToken to the user's email
+        await sql`
+            UPDATE users
+            SET password_reset_token_jwt = ${resetToken}
+            WHERE id = ${user[0].id}
+        `;
+        console.log(`Password reset token for ${email}: ${resetToken}`);
+        return { success: true, message: `Password reset link sent to ${email}` };
+    } catch (error) {
+        console.error('Error sending password reset:', error);
+        return { success: false, message: `Error sending password reset: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
+export async function resetPassword(data:ResetPasswordFormData):Promise<{ success: boolean; message: string }> {
+    try {
+        const parsedData = resetPasswordSchema.safeParse(data);
+        if (!parsedData.success) {
+            return { success: false, message: 'Invalid input data' };
+        }
+        const { token, password, confirmpassword } = parsedData.data;
+        if (password !== confirmpassword) {
+            return { success: false, message: 'Passwords do not match' };
+        }
+        const { payload } = await jwtVerify(token, SECRET_BYTES, {
+            algorithms: ['HS256']
+        });
+        if (!payload || !payload.id || !payload.email) {
+            return { success: false, message: 'Invalid token' };
+        }
+        const user = await sql`SELECT * FROM users WHERE id = ${payload.id as string} AND email = ${payload.email as string}`;
+        if (user.length === 0) {
+            return { success: false, message: 'User not found' };
+        }
+        const passwordHash = await bcrypt.hash(password, 10);
+        await sql`
+            UPDATE users
+            SET password_hash = ${passwordHash}, password_reset_token_jwt = NULL
+            WHERE id = ${user[0].id}
+        `;
+        return { success: true, message: 'Password reset successfully' };
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        return { success: false, message: `Error resetting password: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
 
 export async function logoutUser(): Promise<{ success: boolean; message: string }> {
     try {
         console.log('Logging out user...');
         const cookieStore = cookies();
-        // Remove the cookie by setting its maxAge to -1 or expires to a past date
         (await
-            // Remove the cookie by setting its maxAge to -1 or expires to a past date
             cookieStore).set({
             name: COOKIE_NAME,
             value: '',
             httpOnly: true,
             path: '/',
-            maxAge: -1, // Or use expires: new Date(0)
+            maxAge: -1,
         });
         return { success: true, message: 'Logged out successfully' };
     } catch (error) {

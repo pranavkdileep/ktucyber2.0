@@ -15,6 +15,17 @@ export const loginSchema = z.object({
 })
 export type LoginFormData = z.infer<typeof loginSchema>
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+})
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmpassword: z.string().min(8, 'Password must be at least 8 characters'),
+})
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
+
 export interface User {
   id: string
   firstName: string
