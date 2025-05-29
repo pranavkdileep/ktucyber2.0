@@ -4,6 +4,7 @@ import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { signupSchema, SignupFormData, LoginFormData, loginSchema, ForgotPasswordFormData, forgotPasswordSchema, ResetPasswordFormData, resetPasswordSchema } from "@/lib/schemas";
 import bcrypt from 'bcrypt';
+import { sendEmailVerification, sendPasswordResetEmail } from "./mail";
 
 
 const encoder = new TextEncoder();
@@ -82,7 +83,14 @@ export async function sendPasswordReset(data: ForgotPasswordFormData):Promise<{ 
             WHERE id = ${user[0].id}
         `;
         console.log(`Password reset token for ${email}: ${resetToken}`);
+        const info = await sendPasswordResetEmail({
+            email: user[0].email,
+            token: resetToken
+        });
+        if (info.messageId) {
         return { success: true, message: `Password reset link sent to ${email}` };
+        }
+        return { success: false, message: 'Failed to send password reset email' };
     } catch (error) {
         console.error('Error sending password reset:', error);
         return { success: false, message: `Error sending password reset: ${error instanceof Error ? error.message : 'Unknown error'}` };
@@ -114,6 +122,7 @@ export async function resetPassword(data:ResetPasswordFormData):Promise<{ succes
             SET password_hash = ${passwordHash}, password_reset_token_jwt = NULL
             WHERE id = ${user[0].id}
         `;
+        
         return { success: true, message: 'Password reset successfully' };
     } catch (error) {
         console.error('Error resetting password:', error);
@@ -182,7 +191,14 @@ export async function signupUser(data: SignupFormData): Promise<{ success: boole
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict'
             });
-            return { success: true, message: `User created successfully Please Verify Email With Link http://localhost:3000/userVerify?token=${verificationToken}` };
+            const info = await sendEmailVerification({
+                email: user.email,
+                token:verificationToken
+            })
+            if(info.messageId){
+                return { success: true, message: `User created successfully Please Verify Email With Link` };
+            }
+            return { success: false, message: 'Failed to send verification email' };
         }
     } catch (error) {
         console.error('Error creating user:', error);
