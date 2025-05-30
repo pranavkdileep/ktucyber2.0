@@ -18,6 +18,7 @@ function NavBar() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       const response = await verifyToken();
+      console.log("Auth check response:", response);
       if (response.success) {
         setIsAuthenticated(true);
         setUserData(response.payload);
