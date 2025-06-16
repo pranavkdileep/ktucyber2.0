@@ -2,7 +2,7 @@
 import { sql } from "@/lib/db";
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { signupSchema, SignupFormData, LoginFormData, loginSchema, ForgotPasswordFormData, forgotPasswordSchema, ResetPasswordFormData, resetPasswordSchema } from "@/lib/schemas";
+import { signupSchema, SignupFormData, LoginFormData, loginSchema, ForgotPasswordFormData, forgotPasswordSchema, ResetPasswordFormData, resetPasswordSchema, User } from "@/lib/schemas";
 import bcrypt from 'bcrypt';
 import { sendEmailVerification, sendPasswordResetEmail } from "./mail";
 
@@ -146,6 +146,32 @@ export async function logoutUser(): Promise<{ success: boolean; message: string 
     } catch (error) {
         console.error('Error logging out:', error);
         return { success: false, message: `Error logging out: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
+
+export async function resetEmailVerificationToken(userId: string): Promise<{ success: boolean; message: string }> {
+    try{
+        const user = await sql`SELECT * FROM users WHERE id = ${userId}`;
+        if (user.length === 0) {
+            return { success: false, message: 'User not found' };
+        }
+        const newVerificationToken = await signToken({ id: user[0].id, email: user[0].email, username: user[0].username }, '1h');
+        await sql`
+            UPDATE users
+            SET verification_token_jwt = ${newVerificationToken}
+            WHERE id = ${user[0].id}
+        `;
+        const info = await sendEmailVerification({
+            email: user[0].email,
+            token: newVerificationToken
+        });
+        if(info.messageId){
+            return { success: true, message: 'New verification email sent successfully' };
+        }
+        return { success: false, message: 'Failed to send verification email' };
+    }catch(error) {
+        console.error('Error resetting email verification token:', error);
+        return { success: false, message: `Error resetting email verification token: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
 }
 

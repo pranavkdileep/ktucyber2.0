@@ -37,3 +37,46 @@ export interface User {
   roles: 'user' | 'admin' | 'superadmin'
 }
 
+export interface Document {
+  id: string
+  userId: string
+  title: string
+  description: string
+  subjectId: string
+  courseId: string
+  semesterId: string
+  universityId: string
+  documentType: 'pdf' | 'docx' | 'pptx' | 'xlsx'
+  fileLink: string
+  isPublic: boolean
+  tags?: string[]
+  previewImage?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface UserProfile {
+  theme: 'light' | 'dark'
+  username: string
+  fullName: string
+  email: string
+  profilePicture: string
+  dateOfJoining: string
+  bio: string
+  socialLinks?: {
+    twitter?: string
+    github?: string
+    linkedin?: string
+    website?: string
+    instagram?: string
+  }
+  notifications: {
+    emailNotifications: boolean
+    pushNotifications: boolean
+  }
+  totalFollowers: number
+  totalFollowing: number
+  totalUploadedDocuments: number
+  totalDownloadedDocuments: number
+}
+
