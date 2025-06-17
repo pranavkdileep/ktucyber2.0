@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Search, Menu, UserRound, X } from "lucide-react";
 import { verifyToken, logoutUser } from "../../actions/auth";
 import { Button } from "@/components/ui/button";
 import ProfileDropdown from "./ProfileDropdown";
+import { getUserProfile } from "@/actions/profile";
 
 function NavBar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,6 +16,7 @@ function NavBar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -21,6 +24,12 @@ function NavBar() {
       if (response.success) {
         setIsAuthenticated(true);
         setUserData(response.payload);
+        if(response.payload && response.payload.id){
+          const profiledata = await getUserProfile(response.payload.id as string)
+          if(profiledata?.profilePicture){
+            setProfilePicture(profiledata.profilePicture)
+          }
+        }
       } else {
         setIsAuthenticated(false);
         setUserData(null);
@@ -128,7 +137,17 @@ function NavBar() {
                     variant="ghost"
                     className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
                   >
-                    <UserRound className="h-6 w-6 text-[#121417]" />
+                    {profilePicture ? (
+                      <Image
+                        src={profilePicture}
+                        alt="Profile"
+                        width={24}
+                        height={24}
+                        className="rounded-full h-6 w-6"
+                      />
+                    ) : (
+                      <UserRound className="h-6 w-6 text-[#121417]" />
+                    )}
                   </Button>
                   {isDropdownOpen && (
                     <ProfileDropdown
@@ -167,7 +186,17 @@ function NavBar() {
                       variant="ghost"
                       className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
                     >
+                      {profilePicture ? (
+                      <Image
+                        src={profilePicture}
+                        alt="Profile"
+                        width={24}
+                        height={24}
+                        className="rounded-full h-6 w-6"
+                      />
+                    ) : (
                       <UserRound className="h-6 w-6 text-[#121417]" />
+                    )}
                     </Button>
                     {isDropdownOpen && (
                       <ProfileDropdown

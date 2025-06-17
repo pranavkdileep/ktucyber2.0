@@ -6,7 +6,6 @@ interface UserData {
   lastName?: string;
   username?: string;
   email?: string;
-  // Add other fields if necessary from the JWT payload
 }
 
 interface ProfileDropdownProps {
@@ -16,7 +15,7 @@ interface ProfileDropdownProps {
 
 const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userData, onLogout }) => {
   if (!userData) {
-    return null; // Or some fallback UI
+    return null; 
   }
 
   const displayName = userData.firstName && userData.lastName 
@@ -29,15 +28,14 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userData, onLogout })
     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border border-gray-200">
       <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200 mb-1">
         <p className="font-semibold">{displayName}</p>
-        {/* Optional: display email if username/name is shown */}
         { (userData.firstName || userData.username) && userData.email && 
           <p className="text-xs text-gray-500">{userData.email}</p> 
         }
       </div>
-      <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+      <Link href="/user/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
         Profile
       </Link>
-      <Link href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+      <Link href="/user/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
         Settings
       </Link>
       <button

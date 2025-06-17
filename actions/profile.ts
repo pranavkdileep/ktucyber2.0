@@ -13,10 +13,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
                 u.email,
                 u.profile_picture,
                 u.created_at AS date_of_joining,
-                u.user_settings->>'bio' AS bio,
-                u.user_settings->'social_links' AS social_links,
-                u.user_settings->'notifications' AS notifications,
-                u.user_settings->>'theme' AS theme,
+                u.user_settings AS user_settings,
                 COUNT(DISTINCT f1.user_id) AS total_followers,
                 COUNT(DISTINCT f.follower_id) AS total_following,
                 COUNT(DISTINCT d.id) FILTER (WHERE d.user_id = u.id) AS total_uploaded_documents,
@@ -34,19 +31,20 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
             return null;
         }
         const profile = userProfile[0];
+        const userSettings = JSON.parse(profile.user_settings) || {};
         return {
-            theme: profile.theme || 'light',
+            theme: userSettings.theme || 'light',
             username: profile.username,
             fullName: profile.full_name || '',
             email: profile.email,
             profilePicture: profile.profile_picture || '',
             dateOfJoining: profile.date_of_joining ? new Date(profile.date_of_joining).toISOString() : '',
-            bio: profile.bio || '',
+            bio: userSettings.bio || '',
             notifications: {
-                emailNotifications: profile.notifications?.email_notifications || false,
-                pushNotifications: profile.notifications?.push_notifications || false,
+                emailNotifications: userSettings.notifications?.email_notifications || false,
+                pushNotifications: userSettings.notifications?.push_notifications || false,
             },
-            socialLinks: JSON.parse(profile.social_links) || {},
+            socialLinks: userSettings.social_links || {},
             totalFollowers: parseInt(profile.total_followers, 10) || 0,
             totalFollowing: parseInt(profile.total_following, 10) || 0,
             totalUploadedDocuments: parseInt(profile.total_uploaded_documents, 10) || 0,
@@ -60,40 +58,26 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
 export async function updateUserProfile(userId: string, profileData: Partial<UserProfile>): Promise<boolean> {
     try {
-        console.log("Updating user profile for userId:", profileData);
         const { theme, username, fullName, email, profilePicture, bio, socialLinks, notifications } = profileData;
-
+        const userSettins = {
+            theme: theme || 'light',
+            bio: bio || '',
+            social_links: socialLinks || {},
+            notifications: {
+                email_notifications: notifications?.emailNotifications || false,
+                push_notifications: notifications?.pushNotifications || false,
+            },
+        }
         await sql`
-            UPDATE users
-            SET 
-                username = COALESCE(${username!}, username),
-                first_name = COALESCE(${fullName!}, first_name),
-                email = COALESCE(${email!}, email),
-                profile_picture = COALESCE(${profilePicture!}, profile_picture),
-                user_settings = jsonb_set(
-                    user_settings,
-                    '{bio}',
-                    to_jsonb(COALESCE(${bio || ''}, user_settings->>'bio')),
-                    true
-                ) || jsonb_set(
-                    user_settings,
-                    '{social_links}',
-                    to_jsonb(COALESCE(${JSON.stringify(socialLinks || {})}, user_settings->'social_links')),
-                    true
-                ) || jsonb_set(
-                    user_settings,
-                    '{notifications}',
-                    to_jsonb(COALESCE(${JSON.stringify(notifications || {})}, user_settings->'notifications')),
-                    true
-                ) || jsonb_set(
-                    user_settings,
-                    '{theme}',
-                    to_jsonb(COALESCE(${theme || ''}, user_settings->>'theme')),
-                    true
-                )
-            WHERE id = ${userId};
-        `;
-
+        UPDATE users
+        SET
+            username = ${username ?? null},
+            first_name = ${fullName ?? null},
+            email = ${email ?? null},
+            profile_picture = ${profilePicture ?? null},
+            user_settings = ${JSON.stringify(userSettins)}
+        WHERE id = ${userId ?? null};
+        `        
         return true;
     } catch (error) {
         console.error("Error updating user profile:", error);

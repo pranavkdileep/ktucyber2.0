@@ -67,7 +67,6 @@ export default function SettingsPage() {
       const userProfile = await getUserProfile(userData.id);
       if (userProfile) {
         setProfile(userProfile);
-        console.log(userProfile);
         setFormData({
           username: userProfile.username || userData.username,
           fullName: userProfile.fullName || `${userData.firstName} ${userData.lastName}`,
@@ -121,14 +120,12 @@ export default function SettingsPage() {
     const file = event.target.files?.[0];
     if (!file || !user?.id) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setMessage('Please select a valid image file');
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 1 * 1024 * 1024) {
       setMessage('Image size should be less than 5MB');
       return;
     }
@@ -158,7 +155,6 @@ export default function SettingsPage() {
       const success = await updateUserProfile(user.id, formData);
       if (success) {
         setMessage('Profile updated successfully');
-        // Refresh profile data
         const updatedProfile = await getUserProfile(user.id);
         if (updatedProfile) {
           setProfile(updatedProfile);

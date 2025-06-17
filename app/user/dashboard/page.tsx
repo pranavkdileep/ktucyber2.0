@@ -205,7 +205,7 @@ export default function Dashboard() {
                     Upload
                   </Link>
                   <Link
-                    href="/user/dashboard/settings"
+                    href="/user/settings"
                     className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 w-full sm:w-auto"
                   >
                     <Settings size={16} />
