@@ -31,7 +31,14 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
             return null;
         }
         const profile = userProfile[0];
-        const userSettings = JSON.parse(profile.user_settings) || {};
+        let userSettings;
+        if (typeof profile.user_settings === "string") {
+            userSettings = JSON.parse(profile.user_settings !== '{}' ? profile.user_settings : '{}') || {};
+        } else if (typeof profile.user_settings === "object" && profile.user_settings !== null) {
+            userSettings = profile.user_settings;
+        } else {
+            userSettings = {};
+        }
         return {
             theme: userSettings.theme || 'light',
             username: profile.username,
@@ -77,7 +84,7 @@ export async function updateUserProfile(userId: string, profileData: Partial<Use
             profile_picture = ${profilePicture ?? null},
             user_settings = ${JSON.stringify(userSettins)}
         WHERE id = ${userId ?? null};
-        `        
+        `
         return true;
     } catch (error) {
         console.error("Error updating user profile:", error);
@@ -113,7 +120,7 @@ export async function deleteUserProfile(userId: string): Promise<boolean> {
     }
 }
 
-export async function getUserUploadedDocuments(userId: string,pageno: number = 1, pageSize: number = 10): Promise<{ documents: any[], totalCount: number }> {
+export async function getUserUploadedDocuments(userId: string, pageno: number = 1, pageSize: number = 10): Promise<{ documents: any[], totalCount: number }> {
     try {
         const offset = (pageno - 1) * pageSize;
 
@@ -143,7 +150,7 @@ export async function getUserUploadedDocuments(userId: string,pageno: number = 1
             FROM documents
             WHERE user_id = ${userId};
         `;
-        
+
         return {
             documents: result.map(doc => ({
                 ...doc,
@@ -187,7 +194,7 @@ export async function getUserDownloadedDocuments(userId: string, pageno: number 
             FROM downloads
             WHERE user_id = ${userId};
         `;
-        
+
         return {
             documents: result.map(doc => ({
                 ...doc,
@@ -232,7 +239,7 @@ export async function getUserBookmarks(userId: string, pageno: number = 1, pageS
             FROM bookmarks
             WHERE user_id = ${userId};
         `;
-        
+
         return {
             documents: result.map(doc => ({
                 ...doc,
@@ -268,7 +275,7 @@ export async function getUserFollowers(userId: string, pageno: number = 1, pageS
             FROM followers
             WHERE following_id = ${userId};
         `;
-        
+
         return {
             followers: result.map(follower => ({
                 ...follower,
@@ -304,7 +311,7 @@ export async function getUserFollowing(userId: string, pageno: number = 1, pageS
             FROM followers
             WHERE follower_id = ${userId};
         `;
-        
+
         return {
             following: result.map(following => ({
                 ...following,
@@ -339,7 +346,7 @@ export async function getUserNotifications(userId: string, pageno: number = 1, p
             FROM notifications
             WHERE user_id = ${userId};
         `;
-        
+
         return {
             notifications: result.map(notification => ({
                 ...notification,

@@ -1,6 +1,6 @@
 import { NextResponse,NextRequest } from "next/server";
 
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const width = searchParams.get("width") || "300";
   const height = searchParams.get("height") || "150";
