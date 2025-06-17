@@ -151,6 +151,7 @@ export async function getUserUploadedDocuments(userId: string,pageno: number = 1
         const result = await sql`
             SELECT 
                 d.id,
+                d.slug,
                 d.title,
                 d.description,
                 d.subject_id,
@@ -193,6 +194,7 @@ export async function getUserDownloadedDocuments(userId: string, pageno: number 
         const result = await sql`
             SELECT 
                 d.id,
+                d.slug,
                 d.title,
                 d.description,
                 d.subject_id,
@@ -237,6 +239,7 @@ export async function getUserBookmarks(userId: string, pageno: number = 1, pageS
         const result = await sql`
             SELECT 
                 d.id,
+                d.slug,
                 d.title,
                 d.description,
                 d.subject_id,

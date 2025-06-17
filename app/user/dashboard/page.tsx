@@ -8,6 +8,7 @@ import { Upload, Settings, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Document {
   id: string;
+  slug: string;
   title: string;
   description: string;
   subject_id: string;
@@ -298,9 +299,14 @@ export default function Dashboard() {
                               {activeTab === 'uploads' ? 'Uploaded' : 'Added'} on {formatDate(document.created_at)}
                             </p>
                           </div>
-                          <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal w-fit">
+                          <Link
+                            href={`/documents/${document.slug}`}
+                          >
+                            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal w-fit">
                             <span className="truncate">View</span>
                           </button>
+                          </Link>
+                          
                         </div>
                         <div
                           className="w-full sm:w-48 bg-center bg-no-repeat aspect-video bg-cover rounded-xl order-1 sm:order-2"

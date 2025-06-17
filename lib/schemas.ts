@@ -39,6 +39,7 @@ export interface User {
 
 export interface Document {
   id: string
+  slug: string
   userId: string
   title: string
   description: string

@@ -25,6 +25,7 @@ async function dbInit() {
         await sql`
             CREATE TABLE IF NOT EXISTS documents (
                 id UUID PRIMARY KEY,
+                slug VARCHAR(255) UNIQUE NOT NULL,
                 user_id UUID NOT NULL REFERENCES users(id),
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
