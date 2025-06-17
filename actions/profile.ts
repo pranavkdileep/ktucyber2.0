@@ -46,7 +46,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
                 emailNotifications: profile.notifications?.email_notifications || false,
                 pushNotifications: profile.notifications?.push_notifications || false,
             },
-            socialLinks: profile.social_links || {},
+            socialLinks: JSON.parse(profile.social_links) || {},
             totalFollowers: parseInt(profile.total_followers, 10) || 0,
             totalFollowing: parseInt(profile.total_following, 10) || 0,
             totalUploadedDocuments: parseInt(profile.total_uploaded_documents, 10) || 0,
@@ -60,50 +60,35 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
 export async function updateUserProfile(userId: string, profileData: Partial<UserProfile>): Promise<boolean> {
     try {
+        console.log("Updating user profile for userId:", profileData);
         const { theme, username, fullName, email, profilePicture, bio, socialLinks, notifications } = profileData;
 
         await sql`
             UPDATE users
             SET 
+                username = COALESCE(${username!}, username),
+                first_name = COALESCE(${fullName!}, first_name),
+                email = COALESCE(${email!}, email),
+                profile_picture = COALESCE(${profilePicture!}, profile_picture),
                 user_settings = jsonb_set(
                     user_settings,
-                    '{theme}',
-                    ${theme ? JSON.stringify(theme) : '"light"'},
-                    true
-                ) || jsonb_set(
-                    user_settings,
-                    '{username}',
-                    ${username ? JSON.stringify(username) : 'null'},
-                    true
-                ) || jsonb_set(
-                    user_settings,
-                    '{full_name}',
-                    ${fullName ? JSON.stringify(fullName) : 'null'},
-                    true
-                ) || jsonb_set(
-                    user_settings,
-                    '{email}',
-                    ${email ? JSON.stringify(email) : 'null'},
-                    true
-                ) || jsonb_set(
-                    user_settings,
-                    '{profile_picture}',
-                    ${profilePicture ? JSON.stringify(profilePicture) : 'null'},
-                    true
-                ) || jsonb_set(
-                    user_settings,
                     '{bio}',
-                    ${bio ? JSON.stringify(bio) : 'null'},
+                    to_jsonb(COALESCE(${bio || ''}, user_settings->>'bio')),
                     true
                 ) || jsonb_set(
                     user_settings,
                     '{social_links}',
-                    ${socialLinks ? JSON.stringify(socialLinks) : '{}' },
+                    to_jsonb(COALESCE(${JSON.stringify(socialLinks || {})}, user_settings->'social_links')),
                     true
                 ) || jsonb_set(
                     user_settings,
                     '{notifications}',
-                    ${notifications ? JSON.stringify(notifications) : '{}' },
+                    to_jsonb(COALESCE(${JSON.stringify(notifications || {})}, user_settings->'notifications')),
+                    true
+                ) || jsonb_set(
+                    user_settings,
+                    '{theme}',
+                    to_jsonb(COALESCE(${theme || ''}, user_settings->>'theme')),
                     true
                 )
             WHERE id = ${userId};
