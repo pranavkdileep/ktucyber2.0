@@ -5,26 +5,26 @@ import { UserProfile } from "@/lib/schemas";
 export async function getUserProfile(userName: string): Promise<UserProfile | null> {
     try {
         const userProfile = await sql`
-            SELECT 
-                u.id AS user_id,
-                u.username,
-                u.first_name AS full_name,
-                u.email,
-                u.profile_picture,
-                u.created_at AS date_of_joining,
-                u.user_settings AS user_settings,
-                COUNT(DISTINCT f1.user_id) AS total_followers,
-                COUNT(DISTINCT f.follower_id) AS total_following,
-                COUNT(DISTINCT d.id) FILTER (WHERE d.user_id = u.id) AS total_uploaded_documents,
-                COUNT(DISTINCT dl.document_id) AS total_downloaded_documents
-            FROM users u
-            LEFT JOIN followers f ON f.user_id = u.id
-            LEFT JOIN followers f1 ON f1.follower_id = u.id
-            LEFT JOIN documents d ON d.user_id = u.id
-            LEFT JOIN downloads dl ON dl.document_id = d.id
-            WHERE u.username = ${userName}
-            GROUP BY u.id;
-        `;
+        SELECT 
+            u.id AS user_id,
+            u.username,
+            u.first_name AS full_name,
+            u.email,
+            u.profile_picture,
+            u.created_at AS date_of_joining,
+            u.user_settings AS user_settings,
+            COUNT(DISTINCT f1.follower_id) AS total_followers,
+            COUNT(DISTINCT f2.following_id) AS total_following,
+            COUNT(DISTINCT d.id) FILTER (WHERE d.user_id = u.id) AS total_uploaded_documents,
+            COUNT(DISTINCT dl.document_id) AS total_downloaded_documents
+        FROM users u
+        LEFT JOIN followers f1 ON f1.following_id = u.id
+        LEFT JOIN followers f2 ON f2.follower_id = u.id
+        LEFT JOIN documents d ON d.user_id = u.id
+        LEFT JOIN downloads dl ON dl.document_id = d.id
+        WHERE u.username = ${userName}
+        GROUP BY u.id;
+    `;
 
         if (userProfile.length === 0) {
             return null;
@@ -39,6 +39,7 @@ export async function getUserProfile(userName: string): Promise<UserProfile | nu
             userSettings = {};
         }
         return {
+            id: profile.user_id,
             theme: userSettings.theme || 'light',
             username: profile.username,
             fullName: profile.full_name || '',

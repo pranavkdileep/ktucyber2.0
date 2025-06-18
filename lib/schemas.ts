@@ -57,6 +57,7 @@ export interface Document {
 }
 
 export interface UserProfile {
+  id: string
   theme: 'light' | 'dark'
   username: string
   fullName: string

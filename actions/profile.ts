@@ -2,31 +2,32 @@
 import { UserProfile } from "@/lib/schemas";
 import { sql } from "@/lib/db";
 import { verifyToken } from "./auth";
+import { UUID } from "crypto";
 
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
         const userProfile = await sql`
-            SELECT 
-                u.id AS user_id,
-                u.username,
-                u.first_name AS full_name,
-                u.email,
-                u.profile_picture,
-                u.created_at AS date_of_joining,
-                u.user_settings AS user_settings,
-                COUNT(DISTINCT f1.user_id) AS total_followers,
-                COUNT(DISTINCT f.follower_id) AS total_following,
-                COUNT(DISTINCT d.id) FILTER (WHERE d.user_id = u.id) AS total_uploaded_documents,
-                COUNT(DISTINCT dl.document_id) AS total_downloaded_documents
-            FROM users u
-            LEFT JOIN followers f ON f.user_id = u.id
-            LEFT JOIN followers f1 ON f1.follower_id = u.id
-            LEFT JOIN documents d ON d.user_id = u.id
-            LEFT JOIN downloads dl ON dl.document_id = d.id
-            WHERE u.id = ${userId}
-            GROUP BY u.id;
-        `;
+    SELECT 
+        u.id AS user_id,
+        u.username,
+        u.first_name AS full_name,
+        u.email,
+        u.profile_picture,
+        u.created_at AS date_of_joining,
+        u.user_settings AS user_settings,
+        COUNT(DISTINCT f1.follower_id) AS total_followers,
+        COUNT(DISTINCT f2.following_id) AS total_following,
+        COUNT(DISTINCT d.id) FILTER (WHERE d.user_id = u.id) AS total_uploaded_documents,
+        COUNT(DISTINCT dl.document_id) AS total_downloaded_documents
+    FROM users u
+    LEFT JOIN followers f1 ON f1.following_id = u.id
+    LEFT JOIN followers f2 ON f2.follower_id = u.id
+    LEFT JOIN documents d ON d.user_id = u.id
+    LEFT JOIN downloads dl ON dl.document_id = d.id
+    WHERE u.id = ${userId}
+    GROUP BY u.id;
+`;
 
         if (userProfile.length === 0) {
             return null;
@@ -41,6 +42,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
             userSettings = {};
         }
         return {
+            id: profile.user_id,
             theme: userSettings.theme || 'light',
             username: profile.username,
             fullName: profile.full_name || '',
@@ -258,18 +260,18 @@ export async function getUserFollowers(userId: string, pageno: number = 1, pageS
         const offset = (pageno - 1) * pageSize;
 
         const result = await sql`
-            SELECT 
-                u.id,
-                u.username,
-                u.first_name AS full_name,
-                u.profile_picture,
-                f.created_at
-            FROM followers f
-            JOIN users u ON u.id = f.follower_id
-            WHERE f.following_id = ${userId}
-            ORDER BY f.created_at DESC
-            LIMIT ${pageSize} OFFSET ${offset};
-        `;
+    SELECT 
+        u.id,
+        u.username,
+        u.first_name AS full_name,
+        u.profile_picture,
+        f.created_at
+    FROM followers f
+    JOIN users u ON u.id = f.follower_id
+    WHERE f.following_id = ${userId}
+    ORDER BY f.created_at DESC
+    LIMIT ${pageSize} OFFSET ${offset};
+`;
 
         const totalCountResult = await sql`
             SELECT COUNT(*) AS count
@@ -330,16 +332,7 @@ export async function getUserNotifications(userId: string, pageno: number = 1, p
         const offset = (pageno - 1) * pageSize;
 
         const result = await sql`
-            SELECT 
-                n.id,
-                n.type,
-                n.message,
-                n.is_read,
-                n.created_at
-            FROM notifications n
-            WHERE n.user_id = ${userId}
-            ORDER BY n.created_at DESC
-            LIMIT ${pageSize} OFFSET ${offset};
+            
         `;
 
         const totalCountResult = await sql`
@@ -361,19 +354,19 @@ export async function getUserNotifications(userId: string, pageno: number = 1, p
     }
 }
 
-async function isUserFollowing(userId: string): Promise<boolean> {
+export async function isUserFollowing(userId: string): Promise<boolean> {
     try {
         const currentuserpayload = await verifyToken();
-        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.userId) {
+        if (!currentuserpayload.success) {
             console.error("User not authenticated");
             return false;
         }
-        const followerId = currentuserpayload.payload.userId as string;
+        const followerId = currentuserpayload.payload?.id as string;
         // Check if the user is following
         const existingFollow = await sql`
             SELECT 1
             FROM followers
-            WHERE user_id = ${userId} AND follower_id = ${followerId};
+            WHERE follower_id = ${followerId} AND following_id = ${userId};
         `;
         return existingFollow.length > 0;
     } catch (error) {
@@ -382,19 +375,19 @@ async function isUserFollowing(userId: string): Promise<boolean> {
     }
 }
 
-async function followUser(userId:string): Promise<boolean> {
+export async function followUser(userId: string): Promise<boolean> {
     try {
         const currentuserpayload = await verifyToken();
-        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.userId) {
+        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.id) {
             console.error("User not authenticated");
             return false;
         }
-        const followerId = currentuserpayload.payload.userId as string;
+        const followerId = currentuserpayload.payload.id as UUID;
         // Check if the user is already following
         const existingFollow = await sql`
             SELECT 1
             FROM followers
-            WHERE user_id = ${userId} AND follower_id = ${followerId};
+            WHERE follower_id = ${followerId} AND following_id = ${userId};
         `;
         if (existingFollow.length > 0) {
             console.log("User is already following");
@@ -402,7 +395,7 @@ async function followUser(userId:string): Promise<boolean> {
         }
         // Insert the new follow relationship
         await sql`
-            INSERT INTO followers (user_id, follower_id)
+            INSERT INTO followers (following_id, follower_id)
             VALUES (${userId}, ${followerId});
         `;
         return true;
@@ -412,19 +405,19 @@ async function followUser(userId:string): Promise<boolean> {
     }
 }
 
-async function unfollowUser(userId: string): Promise<boolean> {
+export async function unfollowUser(userId: string): Promise<boolean> {
     try {
         const currentuserpayload = await verifyToken();
-        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.userId) {
+        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.id) {
             console.error("User not authenticated");
             return false;
         }
-        const followerId = currentuserpayload.payload.userId as string;
+        const followerId = currentuserpayload.payload.id as string;
         // Check if the user is following
         const existingFollow = await sql`
             SELECT 1
             FROM followers
-            WHERE user_id = ${userId} AND follower_id = ${followerId};
+            WHERE follower_id = ${followerId} AND following_id = ${userId};
         `;
         if (existingFollow.length === 0) {
             console.log("User is not following");
@@ -433,7 +426,7 @@ async function unfollowUser(userId: string): Promise<boolean> {
         // Delete the follow relationship
         await sql`
             DELETE FROM followers
-            WHERE user_id = ${userId} AND follower_id = ${followerId};
+            WHERE follower_id = ${followerId} AND following_id = ${userId};
         `;
         return true;
     } catch (error) {

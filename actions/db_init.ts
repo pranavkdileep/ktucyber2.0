@@ -93,8 +93,8 @@ async function dbInit() {
         // Create Followers table if it doesn't exist
         await sql`
             CREATE TABLE IF NOT EXISTS followers (
-                id UUID PRIMARY KEY,
-                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 follower_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );

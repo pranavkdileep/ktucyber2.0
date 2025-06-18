@@ -1,10 +1,16 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import { verifyToken, resetEmailVerificationToken } from '@/actions/auth';
-import { getUserProfile, getUserUploadedDocuments, getUserDownloadedDocuments, getUserBookmarks } from '@/actions/profile';
-import { UserProfile } from '@/lib/schemas';
-import Link from 'next/link';
-import { Upload, Settings, AlertCircle, RefreshCw } from 'lucide-react';
+"use client";
+import React, { useState, useEffect } from "react";
+import { verifyToken, resetEmailVerificationToken } from "@/actions/auth";
+import {
+  getUserProfile,
+  getUserUploadedDocuments,
+  getUserDownloadedDocuments,
+  getUserBookmarks,
+} from "@/actions/profile";
+import { UserProfile } from "@/lib/schemas";
+import Link from "next/link";
+import { Upload, Settings, AlertCircle, RefreshCw } from "lucide-react";
+import FollowersModal from "@/components/FollowersModal";
 
 interface Document {
   id: string;
@@ -30,19 +36,35 @@ interface User {
   username: string;
   isActive: boolean;
   isEmailVerified: boolean;
-  roles: 'user' | 'admin' | 'superadmin';
+  roles: "user" | "admin" | "superadmin";
 }
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'uploads' | 'downloads' | 'bookmarks' | 'contributions'>('uploads');
+  const [activeTab, setActiveTab] = useState<
+    "uploads" | "downloads" | "bookmarks" | "contributions"
+  >("uploads");
   const [documents, setDocuments] = useState<Document[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [resendingEmail, setResendingEmail] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState<
+    "followers" | "following"
+  >("followers");
+
+  const handleShowFollowers = () => {
+    setModalInitialTab("followers");
+    setIsFollowersModalOpen(true);
+  };
+
+  const handleShowFollowing = () => {
+    setModalInitialTab("following");
+    setIsFollowersModalOpen(true);
+  };
 
   const pageSize = 5;
 
@@ -60,7 +82,7 @@ export default function Dashboard() {
     try {
       const tokenResult = await verifyToken();
       if (!tokenResult.success || !tokenResult.payload) {
-        window.location.href = '/auth/login';
+        window.location.href = "/auth/login";
         return;
       }
 
@@ -72,8 +94,8 @@ export default function Dashboard() {
         setProfile(userProfile);
       }
     } catch (error) {
-      console.error('Error initializing page:', error);
-      window.location.href = '/auth/login';
+      console.error("Error initializing page:", error);
+      window.location.href = "/auth/login";
     } finally {
       setLoading(false);
     }
@@ -86,13 +108,21 @@ export default function Dashboard() {
     try {
       let result;
       switch (activeTab) {
-        case 'uploads':
-          result = await getUserUploadedDocuments(user.id, currentPage, pageSize);
+        case "uploads":
+          result = await getUserUploadedDocuments(
+            user.id,
+            currentPage,
+            pageSize
+          );
           break;
-        case 'downloads':
-          result = await getUserDownloadedDocuments(user.id, currentPage, pageSize);
+        case "downloads":
+          result = await getUserDownloadedDocuments(
+            user.id,
+            currentPage,
+            pageSize
+          );
           break;
-        case 'bookmarks':
+        case "bookmarks":
           result = await getUserBookmarks(user.id, currentPage, pageSize);
           break;
         default:
@@ -102,7 +132,7 @@ export default function Dashboard() {
       setDocuments(result.documents);
       setTotalPages(Math.ceil(result.totalCount / pageSize));
     } catch (error) {
-      console.error('Error loading tab data:', error);
+      console.error("Error loading tab data:", error);
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -116,20 +146,20 @@ export default function Dashboard() {
     try {
       const result = await resetEmailVerificationToken(user.id);
       setMessage(result.message);
-      setTimeout(() => setMessage(''), 5000);
+      setTimeout(() => setMessage(""), 5000);
     } catch (error) {
-      console.error('Error resending verification:', error);
-      setMessage('Failed to resend verification email');
+      console.error("Error resending verification:", error);
+      setMessage("Failed to resend verification email");
     } finally {
       setResendingEmail(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -145,7 +175,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden" style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}>
+    <div
+      className="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden"
+      style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}
+    >
       <div className="layout-container flex h-full grow flex-col">
         {/* Email Verification Banner */}
         {user && !user.isEmailVerified && (
@@ -155,9 +188,12 @@ export default function Dashboard() {
                 <AlertCircle className="h-5 w-5 text-orange-400 mr-2 mt-0.5 sm:mt-0 flex-shrink-0" />
                 <div>
                   <p className="text-sm text-orange-700">
-                    <strong>Email not verified.</strong> Please check your email and click the verification link.
+                    <strong>Email not verified.</strong> Please check your email
+                    and click the verification link.
                   </p>
-                  {message && <p className="text-xs text-green-600 mt-1">{message}</p>}
+                  {message && (
+                    <p className="text-xs text-green-600 mt-1">{message}</p>
+                  )}
                 </div>
               </div>
               <button
@@ -165,7 +201,9 @@ export default function Dashboard() {
                 disabled={resendingEmail}
                 className="flex items-center gap-2 px-3 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600 disabled:opacity-50 whitespace-nowrap"
               >
-                {resendingEmail ? <RefreshCw className="h-3 w-3 animate-spin" /> : null}
+                {resendingEmail ? (
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                ) : null}
                 Resend
               </button>
             </div>
@@ -181,18 +219,26 @@ export default function Dashboard() {
                   <div
                     className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-24 h-24 sm:min-h-32 sm:w-32 flex-shrink-0"
                     style={{
-                      backgroundImage: `url("${profile?.profilePicture || '/placeholder.svg?height=128&width=128'}")`
+                      backgroundImage: `url("${
+                        profile?.profilePicture ||
+                        "/placeholder.svg?height=128&width=128"
+                      }")`,
                     }}
                   ></div>
                   <div className="flex flex-col justify-center flex-1">
                     <p className="text-[#111418] text-xl sm:text-[22px] font-bold leading-tight tracking-[-0.015em]">
-                      {profile?.fullName || `${user?.firstName} ${user?.lastName}` || 'User'}
+                      {profile?.fullName ||
+                        `${user?.firstName} ${user?.lastName}` ||
+                        "User"}
                     </p>
                     <p className="text-[#60758a] text-sm sm:text-base font-normal leading-normal">
-                      @{profile?.username || user?.username || 'username'}
+                      @{profile?.username || user?.username || "username"}
                     </p>
                     <p className="text-[#60758a] text-sm sm:text-base font-normal leading-normal">
-                      Joined {profile?.dateOfJoining ? formatDate(profile.dateOfJoining) : 'Recently'}
+                      Joined{" "}
+                      {profile?.dateOfJoining
+                        ? formatDate(profile.dateOfJoining)
+                        : "Recently"}
                     </p>
                   </div>
                 </div>
@@ -217,62 +263,78 @@ export default function Dashboard() {
 
             {/* Bio */}
             <p className="text-[#111418] text-sm sm:text-base font-normal leading-normal pb-3 pt-1 px-4">
-              {profile?.bio || "Passionate about sharing knowledge and helping others succeed. Let's learn together!"}
+              {profile?.bio ||
+                "Passionate about sharing knowledge and helping others succeed. Let's learn together!"}
             </p>
 
             {/* Stats */}
             <div className="flex flex-col sm:flex-row gap-3 px-4 py-3">
-              <div className="flex flex-1 flex-col gap-2 rounded-lg border border-[#dbe0e6] p-3 items-start">
+              <button
+                onClick={handleShowFollowers}
+                className="flex flex-1 flex-col gap-2 rounded-lg border border-[#dbe0e6] p-3 items-start hover:bg-gray-50 transition-colors cursor-pointer"
+              >
                 <p className="text-[#111418] tracking-light text-xl sm:text-2xl font-bold leading-tight">
                   {profile?.totalFollowers || 0}
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-[#60758a] text-sm font-normal leading-normal">Followers</p>
+                  <p className="text-[#60758a] text-sm font-normal leading-normal">
+                    Followers
+                  </p>
                 </div>
-              </div>
-              <div className="flex flex-1 flex-col gap-2 rounded-lg border border-[#dbe0e6] p-3 items-start">
+              </button>
+              <button
+                onClick={handleShowFollowing}
+                className="flex flex-1 flex-col gap-2 rounded-lg border border-[#dbe0e6] p-3 items-start hover:bg-gray-50 transition-colors cursor-pointer"
+              >
                 <p className="text-[#111418] tracking-light text-xl sm:text-2xl font-bold leading-tight">
                   {profile?.totalFollowing || 0}
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-[#60758a] text-sm font-normal leading-normal">Following</p>
+                  <p className="text-[#60758a] text-sm font-normal leading-normal">
+                    Following
+                  </p>
                 </div>
-              </div>
+              </button>
             </div>
-
             {/* Tabs */}
             <div className="pb-3">
               <div className="flex border-b border-[#dbe0e6] px-4 gap-4 sm:gap-8 overflow-x-auto">
-                {['uploads', 'downloads', 'bookmarks', 'contributions'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveTab(tab as any);
-                      setCurrentPage(1);
-                    }}
-                    className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 whitespace-nowrap ${
-                      activeTab === tab
-                        ? 'border-b-[#111418] text-[#111418]'
-                        : 'border-b-transparent text-[#60758a]'
-                    }`}
-                  >
-                    <p className={`text-xs sm:text-sm font-bold leading-normal tracking-[0.015em] capitalize ${
-                      activeTab === tab ? 'text-[#111418]' : 'text-[#60758a]'
-                    }`}>
-                      {tab}
-                    </p>
-                  </button>
-                ))}
+                {["uploads", "downloads", "bookmarks", "contributions"].map(
+                  (tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        setActiveTab(tab as any);
+                        setCurrentPage(1);
+                      }}
+                      className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 whitespace-nowrap ${
+                        activeTab === tab
+                          ? "border-b-[#111418] text-[#111418]"
+                          : "border-b-transparent text-[#60758a]"
+                      }`}
+                    >
+                      <p
+                        className={`text-xs sm:text-sm font-bold leading-normal tracking-[0.015em] capitalize ${
+                          activeTab === tab
+                            ? "text-[#111418]"
+                            : "text-[#60758a]"
+                        }`}
+                      >
+                        {tab}
+                      </p>
+                    </button>
+                  )
+                )}
               </div>
             </div>
 
             {/* Content */}
-            {activeTab !== 'contributions' ? (
+            {activeTab !== "contributions" ? (
               <>
                 <h3 className="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
-                  {activeTab === 'uploads' && 'Uploaded Materials'}
-                  {activeTab === 'downloads' && 'Downloaded Materials'}
-                  {activeTab === 'bookmarks' && 'Bookmarked Materials'}
+                  {activeTab === "uploads" && "Uploaded Materials"}
+                  {activeTab === "downloads" && "Downloaded Materials"}
+                  {activeTab === "bookmarks" && "Bookmarked Materials"}
                 </h3>
 
                 {loading ? (
@@ -296,22 +358,23 @@ export default function Dashboard() {
                               {document.title}
                             </p>
                             <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
-                              {activeTab === 'uploads' ? 'Uploaded' : 'Added'} on {formatDate(document.created_at)}
+                              {activeTab === "uploads" ? "Uploaded" : "Added"}{" "}
+                              on {formatDate(document.created_at)}
                             </p>
                           </div>
-                          <Link
-                            href={`/documents/${document.slug}`}
-                          >
+                          <Link href={`/documents/${document.slug}`}>
                             <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal w-fit">
-                            <span className="truncate">View</span>
-                          </button>
+                              <span className="truncate">View</span>
+                            </button>
                           </Link>
-                          
                         </div>
                         <div
                           className="w-full sm:w-48 bg-center bg-no-repeat aspect-video bg-cover rounded-xl order-1 sm:order-2"
                           style={{
-                            backgroundImage: `url("${document.preview_image || '/placeholder.svg?height=200&width=300'}")`
+                            backgroundImage: `url("${
+                              document.preview_image ||
+                              "/placeholder.svg?height=200&width=300"
+                            }")`,
                           }}
                         ></div>
                       </div>
@@ -323,15 +386,24 @@ export default function Dashboard() {
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center p-4 gap-1 sm:gap-2">
                     <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
                       disabled={currentPage === 1}
                       className="flex size-8 sm:size-10 items-center justify-center disabled:opacity-50"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256" className="sm:w-[18px] sm:h-[18px]">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 256 256"
+                        className="sm:w-[18px] sm:h-[18px]"
+                      >
                         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
                       </svg>
                     </button>
-                    
+
                     {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
                       const pageNum = i + 1;
                       return (
@@ -340,21 +412,30 @@ export default function Dashboard() {
                           onClick={() => setCurrentPage(pageNum)}
                           className={`text-xs sm:text-sm font-medium leading-normal flex size-8 sm:size-10 items-center justify-center rounded-full ${
                             currentPage === pageNum
-                              ? 'text-[#111418] bg-[#f0f2f5] font-bold'
-                              : 'text-[#111418]'
+                              ? "text-[#111418] bg-[#f0f2f5] font-bold"
+                              : "text-[#111418]"
                           }`}
                         >
                           {pageNum}
                         </button>
                       );
                     })}
-                    
+
                     <button
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.min(totalPages, currentPage + 1))
+                      }
                       disabled={currentPage === totalPages}
                       className="flex size-8 sm:size-10 items-center justify-center disabled:opacity-50"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256" className="sm:w-[18px] sm:h-[18px]">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 256 256"
+                        className="sm:w-[18px] sm:h-[18px]"
+                      >
                         <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
                       </svg>
                     </button>
@@ -363,16 +444,29 @@ export default function Dashboard() {
               </>
             ) : (
               <>
-                <h3 className="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Contributions</h3>
+                <h3 className="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
+                  Contributions
+                </h3>
                 <div className="flex items-center gap-4 bg-white px-4 min-h-[72px] py-2">
                   <div className="text-[#111418] flex items-center justify-center rounded-lg bg-[#f0f2f5] shrink-0 size-10 sm:size-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256" className="sm:w-6 sm:h-6">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="currentColor"
+                      viewBox="0 0 256 256"
+                      className="sm:w-6 sm:h-6"
+                    >
                       <path d="M239.2,97.29a16,16,0,0,0-13.81-11L166,81.17,142.72,25.81h0a15.95,15.95,0,0,0-29.44,0L90.07,81.17,30.61,86.32a16,16,0,0,0-9.11,28.06L66.61,153.8,53.09,212.34a16,16,0,0,0,23.84,17.34l51-31,51.11,31a16,16,0,0,0,23.84-17.34l-13.51-58.6,45.1-39.36A16,16,0,0,0,239.2,97.29Zm-15.22,5-45.1,39.36a16,16,0,0,0-5.08,15.71L187.35,216v0l-51.07-31a15.9,15.9,0,0,0-16.54,0l-51,31h0L82.2,157.4a16,16,0,0,0-5.08-15.71L32,102.35a.37.37,0,0,1,0-.09l59.44-5.14a16,16,0,0,0,13.35-9.75L128,32.08l23.2,55.29a16,16,0,0,0,13.35,9.75L224,102.26S224,102.32,224,102.33Z"></path>
                     </svg>
                   </div>
                   <div className="flex flex-col justify-center">
-                    <p className="text-[#111418] text-sm sm:text-base font-medium leading-normal line-clamp-1">Reputation</p>
-                    <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal line-clamp-2">120 points</p>
+                    <p className="text-[#111418] text-sm sm:text-base font-medium leading-normal line-clamp-1">
+                      Reputation
+                    </p>
+                    <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal line-clamp-2">
+                      120 points
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 bg-white px-4 min-h-[72px] py-2">
@@ -380,7 +474,9 @@ export default function Dashboard() {
                     <Upload size={20} className="sm:w-6 sm:h-6" />
                   </div>
                   <div className="flex flex-col justify-center">
-                    <p className="text-[#111418] text-sm sm:text-base font-medium leading-normal line-clamp-1">Materials Uploaded</p>
+                    <p className="text-[#111418] text-sm sm:text-base font-medium leading-normal line-clamp-1">
+                      Materials Uploaded
+                    </p>
                     <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal line-clamp-2">
                       {profile?.totalUploadedDocuments || 0} uploads
                     </p>
@@ -388,12 +484,21 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-4 bg-white px-4 min-h-[72px] py-2">
                   <div className="text-[#111418] flex items-center justify-center rounded-lg bg-[#f0f2f5] shrink-0 size-10 sm:size-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256" className="sm:w-6 sm:h-6">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="currentColor"
+                      viewBox="0 0 256 256"
+                      className="sm:w-6 sm:h-6"
+                    >
                       <path d="M240,136v64a16,16,0,0,1-16,16H32a16,16,0,0,1-16-16V136a16,16,0,0,1,16-16H72a8,8,0,0,1,0,16H32v64H224V136H184a8,8,0,0,1,0-16h40A16,16,0,0,1,240,136Zm-117.66-2.34a8,8,0,0,0,11.32,0l48-48a8,8,0,0,0-11.32-11.32L136,108.69V24a8,8,0,0,0-16,0v84.69L85.66,74.34A8,8,0,0,0,74.34,85.66ZM200,168a12,12,0,1,0-12,12A12,12,0,0,0,200,168Z"></path>
                     </svg>
                   </div>
                   <div className="flex flex-col justify-center">
-                    <p className="text-[#111418] text-sm sm:text-base font-medium leading-normal line-clamp-1">Materials Downloaded</p>
+                    <p className="text-[#111418] text-sm sm:text-base font-medium leading-normal line-clamp-1">
+                      Materials Downloaded
+                    </p>
                     <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal line-clamp-2">
                       {profile?.totalDownloadedDocuments || 0} downloads
                     </p>
@@ -404,6 +509,14 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <FollowersModal
+        isOpen={isFollowersModalOpen}
+        onClose={() => setIsFollowersModalOpen(false)}
+        userId={user?.id || ""}
+        initialTab={modalInitialTab}
+        followerCount={profile?.totalFollowers || 0}
+        followingCount={profile?.totalFollowing || 0}
+      />
     </div>
   );
 }
