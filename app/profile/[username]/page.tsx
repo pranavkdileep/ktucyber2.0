@@ -35,9 +35,9 @@ interface User {
 }
 
 interface ProfilePageProps {
-  params: {
+  params: Promise<{
     username: string;
-  };
+  }>;
 }
 
 export default function ProfilePage({ params }: ProfilePageProps) {
