@@ -1,6 +1,7 @@
 'use server';
 import { UserProfile } from "@/lib/schemas";
 import { sql } from "@/lib/db";
+import { verifyToken } from "./auth";
 
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
@@ -357,5 +358,86 @@ export async function getUserNotifications(userId: string, pageno: number = 1, p
     } catch (error) {
         console.error("Error fetching user notifications:", error);
         return { notifications: [], totalCount: 0 };
+    }
+}
+
+async function isUserFollowing(userId: string): Promise<boolean> {
+    try {
+        const currentuserpayload = await verifyToken();
+        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.userId) {
+            console.error("User not authenticated");
+            return false;
+        }
+        const followerId = currentuserpayload.payload.userId as string;
+        // Check if the user is following
+        const existingFollow = await sql`
+            SELECT 1
+            FROM followers
+            WHERE user_id = ${userId} AND follower_id = ${followerId};
+        `;
+        return existingFollow.length > 0;
+    } catch (error) {
+        console.error("Error checking if user is following:", error);
+        return false;
+    }
+}
+
+async function followUser(userId:string): Promise<boolean> {
+    try {
+        const currentuserpayload = await verifyToken();
+        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.userId) {
+            console.error("User not authenticated");
+            return false;
+        }
+        const followerId = currentuserpayload.payload.userId as string;
+        // Check if the user is already following
+        const existingFollow = await sql`
+            SELECT 1
+            FROM followers
+            WHERE user_id = ${userId} AND follower_id = ${followerId};
+        `;
+        if (existingFollow.length > 0) {
+            console.log("User is already following");
+            return false;
+        }
+        // Insert the new follow relationship
+        await sql`
+            INSERT INTO followers (user_id, follower_id)
+            VALUES (${userId}, ${followerId});
+        `;
+        return true;
+    } catch (error) {
+        console.error("Error following user:", error);
+        return false;
+    }
+}
+
+async function unfollowUser(userId: string): Promise<boolean> {
+    try {
+        const currentuserpayload = await verifyToken();
+        if (!currentuserpayload || !currentuserpayload.payload || !currentuserpayload.payload.userId) {
+            console.error("User not authenticated");
+            return false;
+        }
+        const followerId = currentuserpayload.payload.userId as string;
+        // Check if the user is following
+        const existingFollow = await sql`
+            SELECT 1
+            FROM followers
+            WHERE user_id = ${userId} AND follower_id = ${followerId};
+        `;
+        if (existingFollow.length === 0) {
+            console.log("User is not following");
+            return false;
+        }
+        // Delete the follow relationship
+        await sql`
+            DELETE FROM followers
+            WHERE user_id = ${userId} AND follower_id = ${followerId};
+        `;
+        return true;
+    } catch (error) {
+        console.error("Error unfollowing user:", error);
+        return false;
     }
 }
