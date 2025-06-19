@@ -7,26 +7,12 @@ import {
   getUserDownloadedDocuments,
   getUserBookmarks,
 } from "@/actions/profile";
-import { UserProfile } from "@/lib/schemas";
+import { UserProfile,Document } from "@/lib/schemas";
 import Link from "next/link";
 import { Upload, Settings, AlertCircle, RefreshCw } from "lucide-react";
 import FollowersModal from "@/components/FollowersModal";
 
-interface Document {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  subject_id: string;
-  course_id: string;
-  semester_id: string;
-  university_id: string;
-  document_type: string;
-  file_link: string;
-  is_public: boolean;
-  preview_image: string;
-  created_at: string;
-}
+
 
 interface User {
   id: string;
@@ -128,7 +114,6 @@ export default function Dashboard() {
         default:
           result = { documents: [], totalCount: 0 };
       }
-
       setDocuments(result.documents);
       setTotalPages(Math.ceil(result.totalCount / pageSize));
     } catch (error) {
@@ -244,7 +229,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Link
-                    href="/upload"
+                    href="/user/upload"
                     className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 w-full sm:w-auto"
                   >
                     <Upload size={16} />
@@ -352,14 +337,14 @@ export default function Dashboard() {
                         <div className="flex flex-1 flex-col gap-4 order-2 sm:order-1">
                           <div className="flex flex-col gap-1">
                             <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
-                              Subject: {document.subject_id}
+                              Subject: {document.subjectId}
                             </p>
                             <p className="text-[#111418] text-sm sm:text-base font-bold leading-tight">
                               {document.title}
                             </p>
                             <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
                               {activeTab === "uploads" ? "Uploaded" : "Added"}{" "}
-                              on {formatDate(document.created_at)}
+                              on {formatDate(document.createdAt.toString())}
                             </p>
                           </div>
                           <Link href={`/documents/${document.slug}`}>
@@ -372,7 +357,7 @@ export default function Dashboard() {
                           className="w-full sm:w-48 bg-center bg-no-repeat aspect-video bg-cover rounded-xl order-1 sm:order-2"
                           style={{
                             backgroundImage: `url("${
-                              document.preview_image ||
+                              document.previewImage ||
                               "/placeholder.svg?height=200&width=300"
                             }")`,
                           }}

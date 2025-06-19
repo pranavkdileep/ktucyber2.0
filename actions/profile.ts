@@ -1,5 +1,5 @@
 'use server';
-import { UserProfile } from "@/lib/schemas";
+import { UserProfile, Document } from "@/lib/schemas";
 import { sql } from "@/lib/db";
 import { verifyToken } from "./auth";
 import { UUID } from "crypto";
@@ -134,12 +134,12 @@ export async function getUserUploadedDocuments(userId: string, pageno: number = 
                 d.title,
                 d.description,
                 d.subject_id,
-                d.cource_id,
-                d.semester_id,
                 d.university_id,
                 d.document_type,
                 d.file_link,
                 d.is_public,
+                d.tags,
+                d.user_id,
                 d.preview_image,
                 d.created_at
             FROM documents d
@@ -153,12 +153,28 @@ export async function getUserUploadedDocuments(userId: string, pageno: number = 
             FROM documents
             WHERE user_id = ${userId};
         `;
+        if (result.length === 0) {
+            return { documents: [], totalCount: 0 };
+        }
+        const documents: Document[] = result.map(doc => ({
+            id: doc.id,
+            slug: doc.slug,
+            userId: doc.user_id,
+            title: doc.title,
+            description: doc.description,
+            subjectId: doc.subject_id,
+            universityId: doc.university_id,
+            documentType: doc.document_type,
+            fileKey: doc.file_link,
+            isPublic: doc.is_public,
+            tags: doc.tags ? doc.tags : [],
+            previewImage: doc.preview_image || null,
+            createdAt: doc.created_at.toISOString(),
+            updatedAt: doc.created_at.toISOString(),
+        }));
 
         return {
-            documents: result.map(doc => ({
-                ...doc,
-                created_at: doc.created_at.toISOString(),
-            })),
+            documents: documents,
             totalCount: parseInt(totalCountResult[0].count, 10),
         };
     } catch (error) {

@@ -44,11 +44,9 @@ export interface Document {
   title: string
   description: string
   subjectId: string
-  courseId: string
-  semesterId: string
   universityId: string
   documentType: 'pdf' | 'docx' | 'pptx' | 'xlsx'
-  fileLink: string
+  fileKey: string
   isPublic: boolean
   tags?: string[]
   previewImage?: string
@@ -82,3 +80,16 @@ export interface UserProfile {
   totalDownloadedDocuments: number
 }
 
+export interface University {
+  id: string;
+  name: string;
+  image_link?: string;
+  description?: string;
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+}

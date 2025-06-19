@@ -30,8 +30,6 @@ async function dbInit() {
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
                 subject_id UUID NOT NULL,
-                cource_id UUID NOT NULL,
-                semester_id UUID NOT NULL,
                 university_id UUID NOT NULL,
                 document_type VARCHAR(50) NOT NULL,
                 file_link TEXT NOT NULL,
@@ -45,19 +43,10 @@ async function dbInit() {
         // Create Subjects table if it doesn't exist
         await sql`
             CREATE TABLE IF NOT EXISTS subjects (
-                id UUID PRIMARY KEY,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 name VARCHAR(100) NOT NULL,
                 description TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `;
-        // Create Courses table if it doesn't exist
-        await sql`
-            CREATE TABLE IF NOT EXISTS courses (
-                id UUID PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                description TEXT,
+                code VARCHAR(50) UNIQUE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -65,8 +54,9 @@ async function dbInit() {
         // Create Universities table if it doesn't exist
         await sql`
             CREATE TABLE IF NOT EXISTS universities (
-                id UUID PRIMARY KEY,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 name VARCHAR(100) NOT NULL,
+                image_link TEXT,
                 description TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -75,7 +65,7 @@ async function dbInit() {
         // Create Bookmarks table if it doesn't exist
         await sql`
             CREATE TABLE IF NOT EXISTS bookmarks (
-                id UUID PRIMARY KEY,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -84,7 +74,7 @@ async function dbInit() {
         // Create Downloads table if it doesn't exist
         await sql`
             CREATE TABLE IF NOT EXISTS downloads (
-                id UUID PRIMARY KEY,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

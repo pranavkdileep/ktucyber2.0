@@ -5,28 +5,14 @@ import {
   getUserProfile as getPublicUserProfile,
   getUserUploadedDocuments as getPublicUserUploadedDocuments,
 } from "@/actions/public";
-import { UserProfile } from "@/lib/schemas";
+import { UserProfile,Document } from "@/lib/schemas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserPlus, UserMinus, ArrowLeft } from "lucide-react";
 import { followUser, isUserFollowing, unfollowUser } from "@/actions/profile";
 import FollowersModal from "@/components/FollowersModal";
 
-interface Document {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  subject_id: string;
-  course_id: string;
-  semester_id: string;
-  university_id: string;
-  document_type: string;
-  file_link: string;
-  is_public: boolean;
-  preview_image: string;
-  created_at: string;
-}
+
 
 interface User {
   id: string;
@@ -372,13 +358,13 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     <div className="flex flex-1 flex-col gap-4 order-2 sm:order-1">
                       <div className="flex flex-col gap-1">
                         <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
-                          Subject: {document.subject_id}
+                          Subject: {document.subjectId}
                         </p>
                         <p className="text-[#111418] text-sm sm:text-base font-bold leading-tight">
                           {document.title}
                         </p>
                         <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
-                          Uploaded on {formatDate(document.created_at)}
+                          Uploaded on {formatDate(document.createdAt.toString())}
                         </p>
                       </div>
                       <Link href={`/documents/${document.slug}`}>
@@ -391,7 +377,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                       className="w-full sm:w-48 bg-center bg-no-repeat aspect-video bg-cover rounded-xl order-1 sm:order-2"
                       style={{
                         backgroundImage: `url("${
-                          document.preview_image ||
+                          document.previewImage ||
                           "/placeholder.svg?height=200&width=300"
                         }")`,
                       }}
