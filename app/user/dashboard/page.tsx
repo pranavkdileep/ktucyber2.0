@@ -1,4 +1,4 @@
-"use client";
+"use clientt";
 import React, { useState, useEffect } from "react";
 import { verifyToken, resetEmailVerificationToken } from "@/actions/auth";
 import {
