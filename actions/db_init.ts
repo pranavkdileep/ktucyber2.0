@@ -36,6 +36,7 @@ async function dbInit() {
                 is_public BOOLEAN DEFAULT TRUE,
                 tags TEXT[],
                 preview_image TEXT,
+                views INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -45,6 +46,7 @@ async function dbInit() {
             CREATE TABLE IF NOT EXISTS subjects (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 name VARCHAR(100) NOT NULL,
+                slug VARCHAR(100) UNIQUE NOT NULL,
                 description TEXT,
                 code VARCHAR(50) UNIQUE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -56,6 +58,7 @@ async function dbInit() {
             CREATE TABLE IF NOT EXISTS universities (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 name VARCHAR(100) NOT NULL,
+                slug VARCHAR(100) UNIQUE NOT NULL,
                 image_link TEXT,
                 description TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

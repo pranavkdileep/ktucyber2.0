@@ -115,3 +115,15 @@ export async function uploadDocumentFile(
     console.log("Upload response:", res);
     return `${publicUrl}${fileName}`;
 }
+
+export async function deleteFile(fileUrl: string): Promise<void> {
+    if (!fileUrl) {
+        throw new Error("File URL is required for deletion.");
+    }
+    const fileName = fileUrl.replace(publicUrl, "");
+    const command = new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: fileName,
+    });
+    await r2.send(command);
+}

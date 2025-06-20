@@ -1,4 +1,4 @@
-"use clientt";
+"use client";
 import React, { useState, useEffect } from "react";
 import { verifyToken, resetEmailVerificationToken } from "@/actions/auth";
 import {
@@ -9,9 +9,10 @@ import {
 } from "@/actions/profile";
 import { UserProfile,Document } from "@/lib/schemas";
 import Link from "next/link";
-import { Upload, Settings, AlertCircle, RefreshCw } from "lucide-react";
+import { Upload, Settings, AlertCircle, RefreshCw,MoreVertical, Edit, Trash2 } from "lucide-react";
 import FollowersModal from "@/components/FollowersModal";
-
+import EditDocumentModal from "@/components/EditDocumentModal";
+import { deleteDocument, removeDocumentBookmark, removeDocumentDownload, updateDocument } from "@/actions/documents";
 
 
 interface User {
@@ -41,6 +42,68 @@ export default function Dashboard() {
   const [modalInitialTab, setModalInitialTab] = useState<
     "followers" | "following"
   >("followers");
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+
+  const handleEdit = (documentId: string) => {
+    const document = documents.find(doc => doc.id === documentId);
+    if (document) {
+      setSelectedDocument(document);
+      setIsEditModalOpen(true);
+    }
+    setOpenDropdownId(null);
+  };
+
+  const handleSaveDocument = async (documentId: string, updatedData: any) => {
+    const tags = updatedData.tags 
+      ? updatedData.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean)
+      : [];
+
+    await updateDocument(
+      documentId,
+      updatedData.title,
+      updatedData.description,
+      updatedData.isPublic,
+      tags
+    );
+
+    // Reload data after update
+    loadTabData();
+  };
+
+  const handleDelete = async (documentId: string,activeTab:string) => {
+    if (confirm("Are you sure you want to delete this item?")) {
+      try {
+        if( activeTab === "uploads") {
+          await deleteDocument(documentId);
+        } else if (activeTab === "bookmarks") {
+          await removeDocumentBookmark(documentId);
+        }else if (activeTab === "downloads") {
+          await removeDocumentDownload(documentId);
+        }
+        loadTabData();
+        setOpenDropdownId(null);
+      } catch (error) {
+        console.error("Error deleting item:", error);
+      }
+    }
+  };
+
+  const toggleDropdown = (documentId: string) => {
+    setOpenDropdownId(openDropdownId === documentId ? null : documentId);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdownId && !(event.target as Element).closest('.dropdown-container')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openDropdownId]);
 
   const handleShowFollowers = () => {
     setModalInitialTab("followers");
@@ -337,7 +400,11 @@ export default function Dashboard() {
                         <div className="flex flex-1 flex-col gap-4 order-2 sm:order-1">
                           <div className="flex flex-col gap-1">
                             <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
-                              Subject: {document.subjectId}
+                              Subject: {document.subjectName || "N/A"}{" "}
+                              {document.subjectCode && `(${document.subjectCode})`}
+                            </p>
+                            <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
+                              University: {document.universityName || "N/A"}{" "}
                             </p>
                             <p className="text-[#111418] text-sm sm:text-base font-bold leading-tight">
                               {document.title}
@@ -347,11 +414,46 @@ export default function Dashboard() {
                               on {formatDate(document.createdAt.toString())}
                             </p>
                           </div>
-                          <Link href={`/documents/${document.slug}`}>
-                            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal w-fit">
-                              <span className="truncate">View</span>
-                            </button>
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link href={`/${document.subjectSlug}/${document.slug}`}>
+                              <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal w-fit">
+                                <span className="truncate">View</span>
+                              </button>
+                            </Link>
+                            
+                            {/* Dropdown Menu */}
+                            <div className="relative dropdown-container">
+                              <button
+                                onClick={() => toggleDropdown(document.id)}
+                                className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors"
+                              >
+                                <MoreVertical size={16} className="text-gray-600" />
+                              </button>
+                              
+                              {openDropdownId === document.id && (
+                                <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                  {activeTab === "uploads" && (
+                                    <button
+                                      onClick={() => handleEdit(document.id)}
+                                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+                                    >
+                                      <Edit size={14} />
+                                      Edit
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => handleDelete(document.id,activeTab)}
+                                    className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 ${
+                                      activeTab === "uploads" ? "rounded-b-lg" : "rounded-lg"
+                                    }`}
+                                  >
+                                    <Trash2 size={14} />
+                                    {activeTab === "uploads" ? "Delete" : "Remove"}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                         <div
                           className="w-full sm:w-48 bg-center bg-no-repeat aspect-video bg-cover rounded-xl order-1 sm:order-2"
@@ -366,6 +468,7 @@ export default function Dashboard() {
                     </div>
                   ))
                 )}
+
 
                 {/* Pagination */}
                 {totalPages > 1 && (
@@ -501,6 +604,15 @@ export default function Dashboard() {
         initialTab={modalInitialTab}
         followerCount={profile?.totalFollowers || 0}
         followingCount={profile?.totalFollowing || 0}
+      />
+      <EditDocumentModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedDocument(null);
+        }}
+        document={selectedDocument}
+        onSave={handleSaveDocument}
       />
     </div>
   );

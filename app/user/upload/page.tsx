@@ -133,10 +133,12 @@ export default function UploadPage() {
     if (!newUniversityName.trim()) return;
     
     try {
+      const slug = newUniversityName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').trim();
       const newUniversity = await createUniversity(
         newUniversityName,
         "", // No image for now
-        newUniversityDescription
+        newUniversityDescription,
+        slug
       );
       setSelectedUniversity(newUniversity as University);
       setUniversityQuery(newUniversity.name);
@@ -155,7 +157,8 @@ export default function UploadPage() {
       const newSubject = await createSubject(
         newSubjectName,
         newSubjectDescription,
-        newSubjectCode
+        newSubjectCode,
+        newSubjectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').trim()
       );
       setSelectedSubject(newSubject as Subject);
       setSubjectQuery(newSubject.name);

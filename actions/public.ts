@@ -1,6 +1,6 @@
 "use server";
 import { sql } from "@/lib/db";
-import { UserProfile } from "@/lib/schemas";
+import { UserProfile,Document } from "@/lib/schemas";
 
 export async function getUserProfile(userName: string): Promise<UserProfile | null> {
     try {
@@ -73,15 +73,20 @@ export async function getUserUploadedDocuments(userName: string, pageno: number 
                 d.title,
                 d.description,
                 d.subject_id,
-                d.cource_id,
-                d.semester_id,
                 d.university_id,
                 d.document_type,
                 d.file_link,
                 d.is_public,
                 d.preview_image,
-                d.created_at
+                d.created_at,
+                s.name AS subject_name,
+                s.slug AS subject_slug,
+                s.code AS subject_code,
+                un.name AS university_name,
+                un.slug AS university_slug
             FROM documents d
+            JOIN subjects s ON d.subject_id = s.id
+            JOIN universities un ON d.university_id = un.id
             JOIN users u ON d.user_id = u.id
             WHERE u.username = ${userName} AND d.is_public = true
             ORDER BY d.created_at DESC
@@ -101,11 +106,30 @@ export async function getUserUploadedDocuments(userName: string, pageno: number 
             return { documents: [], totalCount: 0 };
         }
 
+        const documents: Document[] = result.map(doc => ({
+            id: doc.id,
+            slug: doc.slug,
+            userId: doc.user_id,
+            title: doc.title,
+            description: doc.description,
+            subjectId: doc.subject_id,
+            subjectName: doc.subject_name || null,
+            subjectSlug: doc.subject_slug || null,
+            subjectCode: doc.subject_code || null,
+            universityId: doc.university_id,
+            universityName: doc.university_name || null,
+            universitySlug: doc.university_slug || null,
+            documentType: doc.document_type,
+            fileKey: doc.file_link,
+            isPublic: doc.is_public,
+            tags: doc.tags ? doc.tags : [],
+            previewImage: doc.preview_image || null,
+            createdAt: doc.created_at.toISOString(),
+            updatedAt: doc.created_at.toISOString(),
+        }));
+
         return {
-            documents: result.map(doc => ({
-                ...doc,
-                created_at: doc.created_at.toISOString(),
-            })),
+            documents: documents,
             totalCount: parseInt(totalCountResult[0].count, 10),
         };
     } catch (error) {
@@ -113,3 +137,4 @@ export async function getUserUploadedDocuments(userName: string, pageno: number 
         return { documents: [], totalCount: 0 };
     }
 }
+

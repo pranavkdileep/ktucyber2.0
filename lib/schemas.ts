@@ -44,7 +44,12 @@ export interface Document {
   title: string
   description: string
   subjectId: string
+  subjectName?: string
+  subjectSlug?: string
+  subjectCode?: string
   universityId: string
+  universityName?: string
+  universitySlug?: string
   documentType: 'pdf' | 'docx' | 'pptx' | 'xlsx'
   fileKey: string
   isPublic: boolean
@@ -83,6 +88,7 @@ export interface UserProfile {
 export interface University {
   id: string;
   name: string;
+  slug: string;
   image_link?: string;
   description?: string;
 }
@@ -90,6 +96,7 @@ export interface University {
 export interface Subject {
   id: string;
   name: string;
+  slug: string;
   code: string;
   description?: string;
 }

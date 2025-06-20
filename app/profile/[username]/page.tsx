@@ -5,14 +5,12 @@ import {
   getUserProfile as getPublicUserProfile,
   getUserUploadedDocuments as getPublicUserUploadedDocuments,
 } from "@/actions/public";
-import { UserProfile,Document } from "@/lib/schemas";
+import { UserProfile, Document } from "@/lib/schemas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserPlus, UserMinus, ArrowLeft } from "lucide-react";
 import { followUser, isUserFollowing, unfollowUser } from "@/actions/profile";
 import FollowersModal from "@/components/FollowersModal";
-
-
 
 interface User {
   id: string;
@@ -93,7 +91,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       const userProfile = await getPublicUserProfile(username);
       if (!userProfile) {
         // User not found, redirect to 404 or show error
-        router.push('/404');
+        router.push("/404");
         return;
       }
 
@@ -301,7 +299,6 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
             {/* Stats */}
             <div className="flex flex-col sm:flex-row gap-3 px-4 py-3">
-            
               <button
                 onClick={handleShowFollowers}
                 className="flex flex-1 flex-col gap-2 rounded-lg border border-[#dbe0e6] p-3 items-start hover:bg-gray-50 transition-colors cursor-pointer"
@@ -328,8 +325,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                   </p>
                 </div>
               </button>
-            
-            
+
               <div className="flex flex-1 flex-col gap-2 rounded-lg border border-[#dbe0e6] p-3 items-start">
                 <p className="text-[#111418] tracking-light text-xl sm:text-2xl font-bold leading-tight">
                   {profileUser.totalUploadedDocuments || 0}
@@ -358,16 +354,21 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     <div className="flex flex-1 flex-col gap-4 order-2 sm:order-1">
                       <div className="flex flex-col gap-1">
                         <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
-                          Subject: {document.subjectId}
+                          Subject: {document.subjectName || "N/A"}{" "}
+                          {document.subjectCode && `(${document.subjectCode})`}
+                        </p>
+                        <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
+                          University: {document.universityName || "N/A"}{" "}
                         </p>
                         <p className="text-[#111418] text-sm sm:text-base font-bold leading-tight">
                           {document.title}
                         </p>
                         <p className="text-[#60758a] text-xs sm:text-sm font-normal leading-normal">
-                          Uploaded on {formatDate(document.createdAt.toString())}
+                          Uploaded on{" "}
+                          {formatDate(document.createdAt.toString())}
                         </p>
                       </div>
-                      <Link href={`/documents/${document.slug}`}>
+                      <Link href={`/${document.subjectSlug}/${document.slug}`}>
                         <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-medium leading-normal w-fit">
                           <span className="truncate">View</span>
                         </button>
@@ -448,13 +449,13 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         </div>
       </div>
       <FollowersModal
-              isOpen={isFollowersModalOpen}
-              onClose={() => setIsFollowersModalOpen(false)}
-              userId={profileUser?.id || ""}
-              initialTab={modalInitialTab}
-              followerCount={profileUser?.totalFollowers || 0}
-              followingCount={profileUser?.totalFollowing || 0}
-            />
+        isOpen={isFollowersModalOpen}
+        onClose={() => setIsFollowersModalOpen(false)}
+        userId={profileUser?.id || ""}
+        initialTab={modalInitialTab}
+        followerCount={profileUser?.totalFollowers || 0}
+        followingCount={profileUser?.totalFollowing || 0}
+      />
     </div>
   );
 }
