@@ -114,7 +114,7 @@ function NavBar() {
                   Explore
                 </Link>
                 <Link
-                  href="/upload"
+                  href="/user/upload"
                   className="text-[#61758a] hover:text-[#121417] text-sm"
                 >
                   Upload
@@ -237,7 +237,7 @@ function NavBar() {
                 Explore
               </Link>
               <Link
-                href="/upload"
+                href="/user/upload"
                 className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"  // Adjusted padding & hover
               >
                 Upload

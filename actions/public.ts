@@ -249,7 +249,6 @@ export async function getSubjectDocuments(subjectSlug: string, searchQuery: stri
     }
 }
 
-
 export async function getDocumentViewPage(slug: string, userId?: string): Promise<DocumentViewPage | null> {
     try {
         // Fetch document and related info
@@ -379,5 +378,65 @@ export async function getDocumentViewPage(slug: string, userId?: string): Promis
     } catch (error) {
         console.error("Error fetching document view page:", error);
         return null;
+    }
+}
+
+export async function getRecentDocuments(limit: number = 10): Promise<{previewImage: string, name: string, slug: string}[]> {
+    try {
+        const result = await sql`
+            SELECT 
+                d.slug, 
+                d.title AS name, 
+                s.slug AS subjectslug,
+                d.preview_image AS previewImage
+            FROM documents d
+            JOIN subjects s ON d.subject_id = s.id
+            WHERE d.is_public = true
+            ORDER BY d.created_at DESC
+            LIMIT ${limit};
+        `;
+
+        if (result.length === 0) {
+            return [];
+        }
+        console.log("Recent documents fetched:", result);
+
+        return result.map(doc => ({
+            slug: `/${doc.subjectslug}/${doc.slug}`,
+            name: doc.name,
+            previewImage: doc.previewImage || '/placeholder.svg?height=150&width=150&query=document'
+        }));
+    } catch (error) {
+        console.error("Error fetching recent documents:", error);
+        return [];
+    }
+}
+
+export async function getTrendingSubjects(limit: number = 6): Promise<{name: string, slug: string, imageUrl: string}[]> {
+    try {
+        const result = await sql`
+            SELECT 
+                s.name, 
+                s.slug, 
+                COUNT(d.id) AS document_count
+            FROM subjects s
+            LEFT JOIN documents d ON s.id = d.subject_id AND d.is_public = true
+            GROUP BY s.id
+            ORDER BY document_count DESC
+            LIMIT ${limit};
+        `;
+
+        if (result.length === 0) {
+            return [];
+        }
+
+        return result.map(sub => ({
+            name: sub.name,
+            slug: sub.slug,
+            imageUrl: `/placeholder.svg?height=150&width=150&query=${encodeURIComponent(sub.name)} subject`
+        }));
+    } catch (error) {
+        console.error("Error fetching trending subjects:", error);
+        return [];
     }
 }
