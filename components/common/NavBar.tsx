@@ -8,6 +8,7 @@ import { verifyToken, logoutUser } from "../../actions/auth";
 import { Button } from "@/components/ui/button";
 import ProfileDropdown from "./ProfileDropdown";
 import { getUserProfile } from "@/actions/profile";
+import { searchSubjects } from "@/actions/documents";
 
 function NavBar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,6 +18,14 @@ function NavBar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
+  const [mobileSearchResults, setMobileSearchResults] = useState<any[]>([]);
+  const [showMobileSearchResults, setShowMobileSearchResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -46,16 +55,69 @@ function NavBar() {
       ) {
         setIsDropdownOpen(false);
       }
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchResults(false);
+      }
+      if (
+        mobileSearchRef.current &&
+        !mobileSearchRef.current.contains(event.target as Node)
+      ) {
+        setShowMobileSearchResults(false);
+      }
     };
 
-    if (isDropdownOpen) {
-      document.addEventListener("click", handleClickOutside);
-    }
-
+    document.addEventListener("click", handleClickOutside);
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, showSearchResults, showMobileSearchResults]);
+
+  const handleSearch = async (query: string, isMobile: boolean = false) => {
+    if (query.trim().length === 0) {
+      if (isMobile) {
+        setMobileSearchResults([]);
+        setShowMobileSearchResults(false);
+      } else {
+        setSearchResults([]);
+        setShowSearchResults(false);
+      }
+      return;
+    }
+
+    try {
+      const results = await searchSubjects(query, 5);
+      if (isMobile) {
+        setMobileSearchResults(results);
+        setShowMobileSearchResults(true);
+      } else {
+        setSearchResults(results);
+        setShowSearchResults(true);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+    }
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>, isMobile: boolean = false) => {
+    const query = e.target.value;
+    if (isMobile) {
+      setMobileSearchQuery(query);
+    } else {
+      setSearchQuery(query);
+    }
+    handleSearch(query, isMobile);
+  };
+
+  const handleSubjectSelect = (slug: string) => {
+    setShowSearchResults(false);
+    setShowMobileSearchResults(false);
+    setSearchQuery("");
+    setMobileSearchQuery("");
+    router.push(`/${slug}`);
+  };
 
   const handleLogout = async () => {
     try {
@@ -66,15 +128,12 @@ function NavBar() {
         setUserData(null);
         setIsDropdownOpen(false);
         router.push('/');
-        router.refresh(); // Important to re-fetch server components and update state
+        router.refresh();
       } else {
-        // Handle logout failure, e.g., show a notification
         console.error("Logout failed:", result.message);
-        // Optionally, inform the user
       }
     } catch (error) {
       console.error("Error during logout:", error);
-      // Optionally, inform the user
     }
   };
 
@@ -107,12 +166,12 @@ function NavBar() {
                 <Link href="/" className="text-[#121417] font-medium text-sm">
                   Home
                 </Link>
-                <Link
+                {/* <Link
                   href="/explore"
                   className="text-[#61758a] hover:text-[#121417] text-sm"
                 >
                   Explore
-                </Link>
+                </Link> */}
                 <Link
                   href="/user/upload"
                   className="text-[#61758a] hover:text-[#121417] text-sm"
@@ -121,13 +180,32 @@ function NavBar() {
                 </Link>
               </nav>
 
-              <div className="hidden md:flex items-center relative rounded-full bg-[#f0f2f5] px-3 py-1.5 mr-3">
-                <Search className="h-4 w-4 text-[#61758a]" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="bg-transparent border-none outline-none pl-2 text-sm text-[#121417] placeholder-[#61758a] w-40"
-                />
+              <div className="hidden md:flex items-center relative mr-3" ref={searchRef}>
+                <div className="flex items-center relative rounded-full bg-[#f0f2f5] px-3 py-1.5">
+                  <Search className="h-4 w-4 text-[#61758a]" />
+                  <input
+                    type="text"
+                    placeholder="Search subjects..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchInputChange(e, false)}
+                    onFocus={() => searchQuery && setShowSearchResults(true)}
+                    className="bg-transparent border-none outline-none pl-2 text-sm text-[#121417] placeholder-[#61758a] w-40"
+                  />
+                </div>
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
+                    {searchResults.map((subject) => (
+                      <div
+                        key={subject.id}
+                        onClick={() => handleSubjectSelect(subject.slug)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="text-sm font-medium text-[#121417]">{subject.name}</div>
+                        <div className="text-xs text-[#61758a]">{subject.code}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {isAuthenticated ? (
@@ -174,13 +252,12 @@ function NavBar() {
                 </div>
               )}
 
-              {/* Mobile navigation */}
               <div className="sm:hidden flex items-center">
-                <Button variant="ghost" size="sm" className="p-1 mr-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}> {/* Menu icon button */}
+                <Button variant="ghost" size="sm" className="p-1 mr-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                   {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </Button>
                 {isAuthenticated ? (
-                  <div className="relative" ref={dropdownRef}> {/* Assign ref here as well for mobile */}
+                  <div className="relative" ref={dropdownRef}>
                     <Button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                       variant="ghost"
@@ -206,7 +283,6 @@ function NavBar() {
                     )}
                   </div>
                 ) : (
-                  // Ensure Link is used for navigation, not just a Button if it's meant to navigate
                   <Link href="/signup"> 
                     <Button className="bg-[#3d99f5] hover:bg-[#3d99f5]/90 text-white rounded-full px-3 py-1 text-xs">
                       Sign up
@@ -216,41 +292,54 @@ function NavBar() {
               </div>
             </div>
           </div>
-
-          {/* Mobile navigation links - always visible for now */}
-          {/* Consider if these links should be hidden or adjusted when user is authenticated */}
-          {/* REMOVED original mobile nav links container, content moved below */}
         </div>
       </header>
-      {/* Collapsible Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="absolute w-full sm:hidden border-t border-[#e5e8eb] bg-white shadow-lg z-20">
           <div className="container mx-auto px-4 py-3">
-            <nav className="flex flex-col space-y-2 mb-4"> {/* Reduced space-y slightly for a tighter look */}
-              <Link href="/" className="text-[#121417] font-medium text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"> {/* Adjusted padding & hover */}
+            <nav className="flex flex-col space-y-2 mb-4">
+              <Link href="/" className="text-[#121417] font-medium text-sm py-2.5 hover:bg-gray-100 rounded-md px-3">
                 Home
               </Link>
-              <Link
+              {/* <Link
                 href="/explore"
-                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"  // Adjusted padding & hover
+                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"
               >
                 Explore
-              </Link>
+              </Link> */}
               <Link
                 href="/user/upload"
-                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"  // Adjusted padding & hover
+                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"
               >
                 Upload
               </Link>
             </nav>
-            {/* Search bar within mobile menu */}
-            <div className="flex items-center relative rounded-full bg-[#f0f2f5] px-3 py-2 w-full"> {/* Adjusted padding for search bar */}
-              <Search className="h-5 w-5 text-[#61758a]" /> {/* Slightly larger search icon */}
-              <input
-                type="text"
-                placeholder="Search"
-                className="bg-transparent border-none outline-none pl-2.5 text-sm text-[#121417] placeholder-[#61758a] w-full" // Adjusted padding
-              />
+            <div className="relative" ref={mobileSearchRef}>
+              <div className="flex items-center relative rounded-full bg-[#f0f2f5] px-3 py-2 w-full">
+                <Search className="h-5 w-5 text-[#61758a]" />
+                <input
+                  type="text"
+                  placeholder="Search subjects..."
+                  value={mobileSearchQuery}
+                  onChange={(e) => handleSearchInputChange(e, true)}
+                  onFocus={() => mobileSearchQuery && setShowMobileSearchResults(true)}
+                  className="bg-transparent border-none outline-none pl-2.5 text-sm text-[#121417] placeholder-[#61758a] w-full"
+                />
+              </div>
+              {showMobileSearchResults && mobileSearchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
+                  {mobileSearchResults.map((subject) => (
+                    <div
+                      key={subject.id}
+                      onClick={() => handleSubjectSelect(subject.slug)}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="text-sm font-medium text-[#121417]">{subject.name}</div>
+                      <div className="text-xs text-[#61758a]">{subject.code}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

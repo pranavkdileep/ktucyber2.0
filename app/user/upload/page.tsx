@@ -103,9 +103,9 @@ export default function UploadPage() {
     setUniversityQuery(query);
     if (query.length > 2) {
       try {
+        setShowUniversityDropdown(true);
         const results = await searchUniversities(query, 10);
         setUniversities(results);
-        setShowUniversityDropdown(true);
       } catch (error) {
         console.error("Error searching universities:", error);
       }
@@ -118,9 +118,9 @@ export default function UploadPage() {
     setSubjectQuery(query);
     if (query.length > 2) {
       try {
+        setShowSubjectDropdown(true);
         const results = await searchSubjects(query, 10);
         setSubjects(results);
-        setShowSubjectDropdown(true);
       } catch (error) {
         console.error("Error searching subjects:", error);
       }
@@ -411,25 +411,28 @@ export default function UploadPage() {
                 <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
               
-              {showSubjectDropdown && subjects.length > 0 && (
+              {showSubjectDropdown && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  {subjects.map((subject) => (
-                    <button
-                      key={subject.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedSubject(subject);
-                        setSubjectQuery(`${subject.name} (${subject.code})`);
-                        setShowSubjectDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
-                    >
-                      <div>
-                        <div className="font-medium">{subject.name}</div>
-                        <div className="text-sm text-gray-500">{subject.code}</div>
-                      </div>
-                    </button>
-                  ))}
+                  {subjects.length > 0 ? (
+                    subjects.map((subject) => (
+                      <button
+                        key={subject.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSubject(subject);
+                          setSubjectQuery(`${subject.name} (${subject.code})`);
+                          setShowSubjectDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
+                      >
+                        <div>
+                          <div className="font-medium">{subject.name}</div>
+                          <div className="text-sm text-gray-500">{subject.code}</div>
+                        </div>
+                      </button>
+                    ))) : (
+                    <div className="px-4 py-2 text-gray-500">No subjects found Or Loading..</div>
+                  )}
                 </div>
               )}
               
