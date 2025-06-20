@@ -371,3 +371,24 @@ export async function removeDocumentDownload(documentId: string) {
         throw new Error("Failed to remove document download");
     }
 }
+
+export async function updateViewCount(documentId: string) {
+    try {
+        // Increment the view count for the document
+        const result = await sql`
+        UPDATE documents 
+        SET views = views + 1, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${documentId}
+        RETURNING *;
+      `;
+
+        if (result.length === 0) {
+            throw new Error("Document not found or view count update failed");
+        }
+
+        return result[0];
+    } catch (error) {
+        console.error("Error updating document view count:", error);
+        throw new Error("Failed to update document view count");
+    }
+}

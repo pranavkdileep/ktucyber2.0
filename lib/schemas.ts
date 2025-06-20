@@ -2,15 +2,15 @@ import { z } from 'zod'
 
 export const signupSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
-  lastName:  z.string().min(1, 'Last name is required'),
-  email:     z.string().email('Invalid email address'),
-  username:  z.string().min(3, 'Username must be at least 3 characters'),
-  password:  z.string().min(8, 'Password must be at least 8 characters'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 export type SignupFormData = z.infer<typeof signupSchema>
 
 export const loginSchema = z.object({
-  email:    z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 export type LoginFormData = z.infer<typeof loginSchema>
@@ -99,4 +99,82 @@ export interface Subject {
   slug: string;
   code: string;
   description?: string;
+}
+
+export interface SubjectPublicDocument {
+  id: string;
+  slug: string;
+  userId: string;
+  title: string;
+  description: string;
+  subjectId: string;
+  subjectName?: string;
+  subjectSlug?: string;
+  subjectCode?: string;
+  universityId: string;
+  universityName?: string;
+  universitySlug?: string;
+  documentType: 'pdf' | 'docx' | 'pptx' | 'xlsx';
+  fileKey: string;
+  tags?: string[];
+  previewImage?: string;
+  username: string;
+  createdAt: Date;
+}
+
+export interface DocumentViewPage {
+  id: string;
+  slug: string;
+  userId: string;
+  title: string;
+  description: string;
+  subjectId: string;
+  subjectName?: string;
+  subjectSlug?: string;
+  subjectCode?: string;
+  universityId: string;
+  universityName?: string;
+  universitySlug?: string;
+  documentType: 'pdf' | 'docx' | 'pptx' | 'xlsx';
+  fileKey: string;
+  tags?: string[];
+  previewImage?: string;
+  views: number;
+  username: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isBookmarked: boolean;
+  isDownloaded: boolean;
+  userProfile: {
+    id: string;
+    username: string;
+    fullName: string;
+    profilePicture: string;
+    bio: string;
+    socialLinks?: {
+      twitter?: string;
+      github?: string;
+      linkedin?: string;
+      website?: string;
+      instagram?: string;
+    };
+    totalFollowers: number;
+    totalFollowing: number;
+    totalUploadedDocuments: number;
+    totalDownloadedDocuments: number;
+  };
+  university: {
+    id: string;
+    name: string;
+    slug: string;
+    image_link?: string;
+    description?: string;
+  };
+  subject: {
+    id: string;
+    name: string;
+    slug: string;
+    code: string;
+    description?: string;
+  };
 }

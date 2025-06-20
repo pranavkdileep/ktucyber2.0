@@ -57,7 +57,7 @@ export default function SettingsPage() {
     try {
       const tokenResult = await verifyToken();
       if (!tokenResult.success || !tokenResult.payload) {
-        window.location.href = '/auth/login';
+        window.location.href = '/login';
         return;
       }
 
@@ -89,7 +89,7 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error initializing page:', error);
-      window.location.href = '/auth/login';
+      window.location.href = '/login';
     } finally {
       setLoading(false);
     }

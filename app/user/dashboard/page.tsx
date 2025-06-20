@@ -131,7 +131,7 @@ export default function Dashboard() {
     try {
       const tokenResult = await verifyToken();
       if (!tokenResult.success || !tokenResult.payload) {
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
         return;
       }
 
@@ -144,7 +144,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error initializing page:", error);
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
     } finally {
       setLoading(false);
     }
