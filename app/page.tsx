@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react"
 import { getRecentDocuments, getTrendingSubjects } from "@/actions/public"
 import { searchSubjects } from "@/actions/documents"
 import { useRouter } from "next/navigation"
+import { dbInit } from "@/actions/db_init";
 
 export default function Home() {
   const [trending_subjects, setTrendingSubjects] = useState<{name: string, slug: string, imageUrl: string}[] | null>(null)
@@ -18,6 +19,7 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchData() {
+      //await dbInit();
       const subs = await getTrendingSubjects()
       if (subs) {
         setTrendingSubjects(subs.map((sub) => ({

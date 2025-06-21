@@ -1,6 +1,6 @@
 import { sql } from "@/lib/db";
 
-async function dbInit() {
+export async function dbInit() {
     try{
         // Create The users table if it doesn't exist
         await sql`
@@ -109,5 +109,3 @@ async function dbInit() {
         console.error("Database initialization failed:", error);
     }
 }
-
-dbInit().catch(console.error);

@@ -76,6 +76,7 @@ export default function Dashboard() {
     if (confirm("Are you sure you want to delete this item?")) {
       try {
         if( activeTab === "uploads") {
+          console.log("deteing")
           await deleteDocument(documentId);
         } else if (activeTab === "bookmarks") {
           await removeDocumentBookmark(documentId);
