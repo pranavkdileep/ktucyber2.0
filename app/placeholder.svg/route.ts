@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
       <rect width="100%" height="100%" fill="#ddd"/>
       <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
             font-family="Arial, sans-serif" font-size="20" fill="#555">
-        ${width}x${height}
+        No Preview !
       </text>
     </svg>
   `;
