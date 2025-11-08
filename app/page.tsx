@@ -19,7 +19,7 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchData() {
-      ///await dbInit();
+      //await dbInit();
       const subs = await getTrendingSubjects()
       if (subs) {
         setTrendingSubjects(subs.map((sub) => ({
