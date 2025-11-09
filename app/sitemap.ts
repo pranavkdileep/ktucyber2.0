@@ -1,17 +1,15 @@
 import { MetadataRoute } from 'next'
 import { sql } from '@/lib/db';
 
-const URL = 'https://www.ktucyber.com'; // Replace with your actual domain if different
+const URL = 'https://www.ktucyber.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Fetch all subjects
   const subjects = await sql`SELECT slug, updated_at FROM subjects`;
   const subjectUrls = subjects.map((sub) => ({
     url: `${URL}/${sub.slug}`,
     lastModified: new Date(sub.updated_at),
   }));
 
-  // Fetch all documents with their corresponding subject slugs
   const documents = await sql`
     SELECT
         d.slug,

@@ -4,25 +4,50 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { verifyToken } from "@/actions/auth";
-import { uploadDocument, searchUniversities, searchSubjects, createUniversity, createSubject } from "@/actions/documents";
-import { uploadDocumentFile, uploadDocumentPreview } from "@/actions/r2operations";
-import { Document,University,Subject } from "@/lib/schemas";
+import {
+  uploadDocument,
+  searchUniversities,
+  searchSubjects,
+  createUniversity,
+  createSubject,
+} from "@/actions/documents";
+import {
+  uploadDocumentFile,
+  uploadDocumentPreview,
+} from "@/actions/r2operations";
+import { Document, University, Subject } from "@/lib/schemas";
 import { ArrowLeft, Upload, FileText, Image, Search, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+let pdfjsLibRef: any = null;
+async function loadPdfJs() {
+  if (typeof window === "undefined") return null;
+  if (pdfjsLibRef) return pdfjsLibRef;
+
+  const mod = await import("pdfjs-dist");
+  if (mod?.GlobalWorkerOptions && !mod.GlobalWorkerOptions.workerSrc) {
+    mod.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
+  }
+  pdfjsLibRef = mod;
+  return mod;
+}
+
 // Upload form schema
 const uploadSchema = z.object({
-    title: z.string().min(1, "Title is required").max(255, "Title must be less than 255 characters"),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    documentType: z.enum(['pdf', 'docx', 'pptx', 'xlsx'], {
-      errorMap: () => ({ message: "Please select a valid document type" })
-    }),
-    isPublic: z.boolean(),  // Remove .default(true) here
-    tags: z.string().optional(),
-  });
-  
-  type UploadFormData = z.infer<typeof uploadSchema>;
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(255, "Title must be less than 255 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  documentType: z.enum(["pdf", "docx", "pptx", "xlsx"], {
+    errorMap: () => ({ message: "Please select a valid document type" }),
+  }),
+  isPublic: z.boolean(), // Remove .default(true) here
+  tags: z.string().optional(),
+});
+
+type UploadFormData = z.infer<typeof uploadSchema>;
 
 interface User {
   id: string;
@@ -35,7 +60,6 @@ interface User {
   roles: "user" | "admin" | "superadmin";
 }
 
-
 export default function UploadPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -44,17 +68,18 @@ export default function UploadPage() {
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string>("");
-  
+
   // University and Subject state
   const [universities, setUniversities] = useState<University[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
+  const [selectedUniversity, setSelectedUniversity] =
+    useState<University | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [universityQuery, setUniversityQuery] = useState("");
   const [subjectQuery, setSubjectQuery] = useState("");
   const [showUniversityDropdown, setShowUniversityDropdown] = useState(false);
   const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
-  
+
   // Create new university/subject modals
   const [showCreateUniversity, setShowCreateUniversity] = useState(false);
   const [showCreateSubject, setShowCreateSubject] = useState(false);
@@ -72,7 +97,7 @@ export default function UploadPage() {
   } = useForm<UploadFormData>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
-      isPublic: true, 
+      isPublic: true,
       tags: "",
     },
   });
@@ -131,9 +156,13 @@ export default function UploadPage() {
 
   const handleCreateUniversity = async () => {
     if (!newUniversityName.trim()) return;
-    
+
     try {
-      const slug = newUniversityName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').trim();
+      const slug = newUniversityName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
       const newUniversity = await createUniversity(
         newUniversityName,
         "", // No image for now
@@ -152,13 +181,17 @@ export default function UploadPage() {
 
   const handleCreateSubject = async () => {
     if (!newSubjectName.trim() || !newSubjectCode.trim()) return;
-    
+
     try {
       const newSubject = await createSubject(
         newSubjectName,
         newSubjectDescription,
         newSubjectCode,
-        newSubjectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').trim()
+        newSubjectName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/-+/g, "-")
+          .trim()
       );
       setSelectedSubject(newSubject as Subject);
       setSubjectQuery(newSubject.name);
@@ -171,25 +204,68 @@ export default function UploadPage() {
     }
   };
 
-  const handleDocumentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                           'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+      const allowedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ];
       if (!allowedTypes.includes(file.type)) {
         alert("Please select a valid document file (PDF, DOCX, PPTX, XLSX)");
         return;
       }
-      
+
       // Check file size (max 50MB)
       if (file.size > 50 * 1024 * 1024) {
         alert("File size must be less than 50MB");
         return;
       }
-      
+
       setDocumentFile(file);
+      await genDocumentPreview(file);
+    }
+  };
+  async function dataURLToFile(dataUrl: string, filename: string) {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const mime = (dataUrl.match(/^data:(.*?);/)?.[1]) || blob.type || "application/octet-stream";
+  return new File([blob], filename, { type: mime });
+}
+
+  const genDocumentPreview = async (file: File) => {
+    try {
+      if (file.type === "application/pdf") {
+        const pdfjsLib = await loadPdfJs();
+        if (!pdfjsLib) return;
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.0 });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Could not get 2D canvas context");
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        const dataUrl = canvas.toDataURL();
+        const preview = await dataURLToFile(
+          dataUrl,
+          `${file.name.replace(/\.[^/.]+$/, "")}-preview.png`
+        );
+        setPreviewFile(preview);
+        console.log("Generated PDF preview data URL:", dataUrl);
+      }
+    } catch (error) {
+      console.error("Error generating document preview:", error);
     }
   };
 
@@ -197,17 +273,17 @@ export default function UploadPage() {
     const file = e.target.files?.[0];
     if (file) {
       // Validate image file
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         alert("Please select a valid image file");
         return;
       }
-      
+
       // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert("Image size must be less than 5MB");
         return;
       }
-      
+
       setPreviewFile(file);
     }
   };
@@ -230,10 +306,14 @@ export default function UploadPage() {
     setUploading(true);
     try {
       setUploadProgress("Uploading document file...");
-      
+
       // Upload document file
-      const fileUrl = await uploadDocumentFile(user.id, documentFile, data.documentType);
-      
+      const fileUrl = await uploadDocumentFile(
+        user.id,
+        documentFile,
+        data.documentType
+      );
+
       // Upload preview image if provided
       let previewUrl = "";
       if (previewFile) {
@@ -242,13 +322,22 @@ export default function UploadPage() {
       }
 
       setUploadProgress("Creating document record...");
-      
+
       // Create document record
       const documentId = crypto.randomUUID();
-      const slug = `${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').trim()}-${documentId.slice(0, 8)}`;
-      
-      const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
-      
+      const slug = `${data.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/-+/g, "-")
+        .trim()}-${documentId.slice(0, 8)}`;
+
+      const tags = data.tags
+        ? data.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        : [];
+
       const document: Document = {
         id: documentId,
         slug,
@@ -267,9 +356,9 @@ export default function UploadPage() {
       };
 
       await uploadDocument(document);
-      
+
       setUploadProgress("Upload completed successfully!");
-      
+
       // Reset form
       reset();
       setDocumentFile(null);
@@ -278,12 +367,11 @@ export default function UploadPage() {
       setSelectedSubject(null);
       setUniversityQuery("");
       setSubjectQuery("");
-      
+
       // Redirect to dashboard after a short delay
       setTimeout(() => {
         router.push("/user/dashboard");
       }, 2000);
-      
     } catch (error) {
       console.error("Error uploading document:", error);
       setUploadProgress("Upload failed. Please try again.");
@@ -308,14 +396,19 @@ export default function UploadPage() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/user/dashboard" className="flex items-center gap-2 text-gray-600 hover:text-gray-800">
+          <Link
+            href="/user/dashboard"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          >
             <ArrowLeft size={20} />
             Back to Dashboard
           </Link>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Upload Document</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">
+            Upload Document
+          </h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Title */}
@@ -330,7 +423,9 @@ export default function UploadPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {errors.title && (
-                <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.title.message}
+                </p>
               )}
             </div>
 
@@ -346,7 +441,9 @@ export default function UploadPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {errors.description && (
-                <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.description.message}
+                </p>
               )}
             </div>
 
@@ -365,7 +462,7 @@ export default function UploadPage() {
                 />
                 <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
-              
+
               {showUniversityDropdown && universities.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                   {universities.map((university) => (
@@ -384,7 +481,7 @@ export default function UploadPage() {
                   ))}
                 </div>
               )}
-              
+
               <button
                 type="button"
                 onClick={() => setShowCreateUniversity(true)}
@@ -410,7 +507,7 @@ export default function UploadPage() {
                 />
                 <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
-              
+
               {showSubjectDropdown && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                   {subjects.length > 0 ? (
@@ -427,15 +524,20 @@ export default function UploadPage() {
                       >
                         <div>
                           <div className="font-medium">{subject.name}</div>
-                          <div className="text-sm text-gray-500">{subject.code}</div>
+                          <div className="text-sm text-gray-500">
+                            {subject.code}
+                          </div>
                         </div>
                       </button>
-                    ))) : (
-                    <div className="px-4 py-2 text-gray-500">No subjects found Or Loading..</div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-gray-500">
+                      No subjects found Or Loading..
+                    </div>
                   )}
                 </div>
               )}
-              
+
               <button
                 type="button"
                 onClick={() => setShowCreateSubject(true)}
@@ -462,7 +564,9 @@ export default function UploadPage() {
                 <option value="xlsx">Excel (XLSX)</option>
               </select>
               {errors.documentType && (
-                <p className="text-red-500 text-sm mt-1">{errors.documentType.message}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.documentType.message}
+                </p>
               )}
             </div>
 
@@ -476,9 +580,13 @@ export default function UploadPage() {
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <FileText className="w-8 h-8 mb-2 text-gray-500" />
                     <p className="mb-2 text-sm text-gray-500">
-                      {documentFile ? documentFile.name : "Click to upload document"}
+                      {documentFile
+                        ? documentFile.name
+                        : "Click to upload document"}
                     </p>
-                    <p className="text-xs text-gray-500">PDF, DOCX, PPTX, XLSX (MAX. 50MB)</p>
+                    <p className="text-xs text-gray-500">
+                      PDF, DOCX, PPTX, XLSX (MAX. 50MB)
+                    </p>
                   </div>
                   <input
                     type="file"
@@ -500,9 +608,13 @@ export default function UploadPage() {
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Image className="w-8 h-8 mb-2 text-gray-500" />
                     <p className="mb-2 text-sm text-gray-500">
-                      {previewFile ? previewFile.name : "Click to upload preview image"}
+                      {previewFile
+                        ? previewFile.name
+                        : "Click to upload preview image"}
                     </p>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 5MB)</p>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF (MAX. 5MB)
+                    </p>
                   </div>
                   <input
                     type="file"
@@ -535,7 +647,10 @@ export default function UploadPage() {
                 id="isPublic"
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="isPublic" className="ml-2 block text-sm text-gray-700">
+              <label
+                htmlFor="isPublic"
+                className="ml-2 block text-sm text-gray-700"
+              >
                 Make this document public (visible to all users)
               </label>
             </div>
