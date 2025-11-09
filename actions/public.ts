@@ -235,7 +235,7 @@ export async function getSubjectDocuments(subjectSlug: string, searchQuery: stri
             documentType: doc.documentType as 'pdf' | 'docx' | 'pptx' | 'xlsx',
             fileKey: doc.fileKey,
             tags: doc.tags ? doc.tags : [],
-            previewImage: doc.previewImage || null,
+            previewImage: doc.previewimage || null,
             username: doc.username,
             createdAt: doc.created_at.toISOString(),
         }));
@@ -404,7 +404,7 @@ export async function getRecentDocuments(limit: number = 10): Promise<{previewIm
         return result.map(doc => ({
             slug: `/${doc.subjectslug}/${doc.slug}`,
             name: doc.name,
-            previewImage: doc.previewImage || '/placeholder.svg?height=150&width=150&query=document'
+            previewImage: doc.previewimage || '/placeholder.svg?height=150&width=150&query=document'
         }));
     } catch (error) {
         console.error("Error fetching recent documents:", error);
