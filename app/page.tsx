@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react"
 import { getRecentDocuments, getTrendingSubjects } from "@/actions/public"
 import { searchSubjects } from "@/actions/documents"
 import { useRouter } from "next/navigation"
+import { getCachedDocuments, getCachedSubjects, updateCachedHomeData } from "@/actions/fetch_home_data";
 // import { dbInit } from "@/actions/db_init";
 
 export default function Home() {
@@ -20,22 +21,36 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       //await dbInit();
-      const subs = await getTrendingSubjects()
+      // const subs = await getTrendingSubjects()
+      // if (subs) {
+      //   setTrendingSubjects(subs.map((sub) => ({
+      //     name: sub.name,
+      //     slug: sub.slug,
+      //     imageUrl: "/placeholder.svg?height=150&width=150&query=" + encodeURIComponent(sub.name)
+      //   })))
+      // }
+      // const recentDoc = await getRecentDocuments()
+      // if (recentDoc) {
+      //   setRecentDocuments(recentDoc.map((doc) => ({
+      //     previewImage: doc.previewImage || "/placeholder.svg?height=150&width=150&query=document",
+      //     name: doc.name,
+      //     slug: doc.slug
+      //   })))
+      // }
+
+      const subs = await getCachedSubjects()
+      const recentDoc = await getCachedDocuments()
       if (subs) {
-        setTrendingSubjects(subs.map((sub) => ({
-          name: sub.name,
-          slug: sub.slug,
-          imageUrl: "/placeholder.svg?height=150&width=150&query=" + encodeURIComponent(sub.name)
-        })))
+        setTrendingSubjects(subs)
       }
-      const recentDoc = await getRecentDocuments()
       if (recentDoc) {
-        setRecentDocuments(recentDoc.map((doc) => ({
-          previewImage: doc.previewImage || "/placeholder.svg?height=150&width=150&query=document",
-          name: doc.name,
-          slug: doc.slug
-        })))
+        setRecentDocuments(recentDoc)
       }
+      if (!subs || !recentDoc) {
+        updateCachedHomeData()
+        fetchData()
+      }
+      updateCachedHomeData()
     }
     fetchData()
   }, [])
