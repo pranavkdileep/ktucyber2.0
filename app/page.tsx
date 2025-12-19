@@ -6,11 +6,11 @@ import { useEffect, useState, useRef } from "react"
 import { getRecentDocuments, getTrendingSubjects } from "@/actions/public"
 import { searchSubjects } from "@/actions/documents"
 import { useRouter } from "next/navigation"
-import { dbInit } from "@/actions/db_init";
+// import { dbInit } from "@/actions/db_init";
 
 export default function Home() {
-  const [trending_subjects, setTrendingSubjects] = useState<{name: string, slug: string, imageUrl: string}[] | null>(null)
-  const [recent_documents, setRecentDocuments] = useState<{previewImage: string, name: string, slug: string}[] | null>(null)
+  const [trending_subjects, setTrendingSubjects] = useState<{ name: string, slug: string, imageUrl: string }[] | null>(null)
+  const [recent_documents, setRecentDocuments] = useState<{ previewImage: string, name: string, slug: string }[] | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showSearchResults, setShowSearchResults] = useState(false)
@@ -25,7 +25,7 @@ export default function Home() {
         setTrendingSubjects(subs.map((sub) => ({
           name: sub.name,
           slug: sub.slug,
-          imageUrl:"/placeholder.svg?height=150&width=150&query=" + encodeURIComponent(sub.name)
+          imageUrl: "/placeholder.svg?height=150&width=150&query=" + encodeURIComponent(sub.name)
         })))
       }
       const recentDoc = await getRecentDocuments()
@@ -86,7 +86,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      
+
       <main className="container mx-auto px-4 py-6">
         {/* Main Search */}
         <div className="relative max-w-3xl mx-auto mb-8" ref={searchRef}>
@@ -161,9 +161,9 @@ export default function Home() {
   )
 }
 
-function SubjectCard({ name, imageUrl,slug }: { name: string; imageUrl: string; slug?: string }) {
+function SubjectCard({ name, imageUrl, slug }: { name: string; imageUrl: string; slug?: string }) {
   return (
-    <Link href={slug ? `/${slug}`:"#"} className="group">
+    <Link href={slug ? `/${slug}` : "#"} className="group">
       <div className="overflow-hidden rounded-lg aspect-square">
         <Image
           src={imageUrl || "/placeholder.svg"}
@@ -178,7 +178,7 @@ function SubjectCard({ name, imageUrl,slug }: { name: string; imageUrl: string; 
   )
 }
 
-function DocumentCard({ name, imageUrl, featured = false,slug }: { name: string; imageUrl: string; featured?: boolean; slug:string }) {
+function DocumentCard({ name, imageUrl, featured = false, slug }: { name: string; imageUrl: string; featured?: boolean; slug: string }) {
   return (
     <Link href={slug} className={`group ${featured ? "ring-2 ring-[#3d99f5]/20 rounded-lg" : ""}`}>
       <div className={`overflow-hidden rounded-lg aspect-square ${featured ? "bg-white" : ""}`}>
