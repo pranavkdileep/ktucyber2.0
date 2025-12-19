@@ -1,6 +1,7 @@
 "use server";
 import { sql } from "@/lib/db";
-import { UserProfile, Document, Subject, SubjectPublicDocument ,DocumentViewPage} from "@/lib/schemas";
+import { UserProfile, Document, Subject, SubjectPublicDocument, DocumentViewPage } from "@/lib/schemas";
+import { unstable_cache } from "next/cache";
 
 export async function getUserProfile(userName: string): Promise<UserProfile | null> {
     try {
@@ -381,62 +382,73 @@ export async function getDocumentViewPage(slug: string, userId?: string): Promis
     }
 }
 
-export async function getRecentDocuments(limit: number = 10): Promise<{previewImage: string, name: string, slug: string}[]> {
-    try {
-        const result = await sql`
-            SELECT 
-                d.slug, 
-                d.title AS name, 
-                s.slug AS subjectslug,
-                d.preview_image AS previewImage
-            FROM documents d
-            JOIN subjects s ON d.subject_id = s.id
-            WHERE d.is_public = true
-            ORDER BY d.created_at DESC
-            LIMIT ${limit};
-        `;
+export async function getRecentDocuments(limit: number = 10): Promise<{ previewImage: string, name: string, slug: string }[]> {
+    return await unstable_cache(async () => {
+        try {
+            const result = await sql`
+                SELECT 
+                    d.slug, 
+                    d.title AS name, 
+                    s.slug AS subjectslug,
+                    d.preview_image AS previewImage
+                FROM documents d
+                JOIN subjects s ON d.subject_id = s.id
+                WHERE d.is_public = true
+                ORDER BY d.created_at DESC
+                LIMIT ${limit};
+            `;
 
-        if (result.length === 0) {
+            if (result.length === 0) {
+                return [];
+            }
+            console.log("Recent documents fetched (uncached):", result);
+
+            return result.map(doc => ({
+                slug: `/${doc.subjectslug}/${doc.slug}`,
+                name: doc.name,
+                previewImage: doc.previewimage || '/placeholder.svg?height=150&width=150&query=document'
+            }));
+        } catch (error) {
+            console.error("Error fetching recent documents:", error);
             return [];
         }
-        console.log("Recent documents fetched:", result);
-
-        return result.map(doc => ({
-            slug: `/${doc.subjectslug}/${doc.slug}`,
-            name: doc.name,
-            previewImage: doc.previewimage || '/placeholder.svg?height=150&width=150&query=document'
-        }));
-    } catch (error) {
-        console.error("Error fetching recent documents:", error);
-        return [];
-    }
+    }, ['recent-documents', limit.toString()], {
+        revalidate: 3600,
+        tags: ['recent-documents']
+    })();
 }
 
-export async function getTrendingSubjects(limit: number = 6): Promise<{name: string, slug: string, imageUrl: string}[]> {
-    try {
-        const result = await sql`
-            SELECT 
-                s.name, 
-                s.slug, 
-                COUNT(d.id) AS document_count
-            FROM subjects s
-            LEFT JOIN documents d ON s.id = d.subject_id AND d.is_public = true
-            GROUP BY s.id
-            ORDER BY document_count DESC
-            LIMIT ${limit};
-        `;
 
-        if (result.length === 0) {
+export async function getTrendingSubjects(limit: number = 6): Promise<{ name: string, slug: string, imageUrl: string }[]> {
+    return await unstable_cache(async () => {
+        try {
+            const result = await sql`
+                SELECT 
+                    s.name, 
+                    s.slug, 
+                    COUNT(d.id) AS document_count
+                FROM subjects s
+                LEFT JOIN documents d ON s.id = d.subject_id AND d.is_public = true
+                GROUP BY s.id
+                ORDER BY document_count DESC
+                LIMIT ${limit};
+            `;
+
+            if (result.length === 0) {
+                return [];
+            }
+
+            return result.map(sub => ({
+                name: sub.name,
+                slug: sub.slug,
+                imageUrl: `/placeholder.svg?height=150&width=150&query=${encodeURIComponent(sub.name)} subject`
+            }));
+        } catch (error) {
+            console.error("Error fetching trending subjects:", error);
             return [];
         }
-
-        return result.map(sub => ({
-            name: sub.name,
-            slug: sub.slug,
-            imageUrl: `/placeholder.svg?height=150&width=150&query=${encodeURIComponent(sub.name)} subject`
-        }));
-    } catch (error) {
-        console.error("Error fetching trending subjects:", error);
-        return [];
-    }
+    }, ['trending-subjects', limit.toString()], {
+        revalidate: 3600,
+        tags: ['trending-subjects']
+    })();
 }
