@@ -73,7 +73,7 @@ export default function AgentsPage() {
             <div>
               <h1 className="text-3xl font-bold">Study Agents</h1>
               <p className="mt-2 max-w-2xl text-sm text-white/90">
-                Pick a book agent, ask a question, and stream structured study notes in PDF Format.
+                Pick a book agent, ask a question, and generate structured study notes in PDF Format.
               </p>
             </div>
           </div>
@@ -134,7 +134,7 @@ export default function AgentsPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-sm text-slate-500">
-                    Open this study agent to generate streaming notes for the selected book.
+                    Open this study agent to generate study notes for the selected book.
                   </p>
                 </Link>
               ))}

@@ -399,7 +399,7 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
               <p className="text-xs uppercase tracking-[0.3em] text-sky-200">Agent Chat</p>
               <h1 className="mt-2 break-all text-3xl font-bold">{bookid || "Loading..."}</h1>
               <p className="mt-3 max-w-2xl text-sm text-slate-200">
-                Ask this book agent for study notes, summaries, or topic explanations and watch the markdown response stream in live.
+                Ask this book agent for study notes, summaries, or topic explanations and watch the PDF response in live.
               </p>
             </div>
             <div className="inline-flex items-center gap-2 self-start rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-slate-100">
@@ -422,7 +422,7 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Prompt Box</h2>
                 <p className="text-sm text-slate-500">
-                  Send a question for this agent and stream the answer into the preview.
+                  Send a question for this agent and response the answer into the preview.
                 </p>
               </div>
             </div>
@@ -477,7 +477,7 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
               <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <h3 className="text-sm font-semibold text-slate-900">Images discovered</h3>
                 <p className="mt-1 text-xs text-slate-500">
-                  Placeholder image tags are converted to real images after the stream completes.
+                  Placeholder image tags are converted to real images after the generation completes.
                 </p>
               </div>
             )}
