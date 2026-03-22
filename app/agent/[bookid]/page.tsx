@@ -23,15 +23,14 @@ interface StreamStatus {
   [key: string]: unknown;
 }
 
-const AGENT_API_BASE =
-  process.env.NEXT_PUBLIC_AGENT_API_BASE || "http://127.0.0.1:8000";
+function getProxiedImageUrl(src: string) {
+  return `/api/agent/image?src=${encodeURIComponent(src)}`;
+}
 
 function replaceImageTags(markdown: string, items: AgentImageItem[]) {
   return items.reduce((content, item) => {
     const imageTagPattern = new RegExp(`<image id="${item.figure_id}">`, "g");
-    const normalizedUrl = item.image_url.startsWith("http")
-      ? item.image_url
-      : `${AGENT_API_BASE}${item.image_url}`;
+    const normalizedUrl = getProxiedImageUrl(item.image_url);
     const replacement = `![${item.image_caption_text}](${normalizedUrl} "${item.image_caption_text}")`;
     return content.replace(imageTagPattern, replacement);
   }, markdown);
