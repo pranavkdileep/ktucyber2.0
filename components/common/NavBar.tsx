@@ -166,6 +166,12 @@ function NavBar() {
                 <Link href="/" className="text-[#121417] font-medium text-sm">
                   Home
                 </Link>
+                <Link
+                  href="/agents"
+                  className="text-[#61758a] hover:text-[#121417] text-sm"
+                >
+                  Agents
+                </Link>
                 {/* <Link
                   href="/explore"
                   className="text-[#61758a] hover:text-[#121417] text-sm"
@@ -300,6 +306,12 @@ function NavBar() {
             <nav className="flex flex-col space-y-2 mb-4">
               <Link href="/" className="text-[#121417] font-medium text-sm py-2.5 hover:bg-gray-100 rounded-md px-3">
                 Home
+              </Link>
+              <Link
+                href="/agents"
+                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"
+              >
+                Agents
               </Link>
               {/* <Link
                 href="/explore"
