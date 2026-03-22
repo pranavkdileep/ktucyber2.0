@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Search, Menu, UserRound, X } from "lucide-react";
+import { Search, Menu, Sparkles, UserRound, X } from "lucide-react";
 import { verifyToken, logoutUser } from "../../actions/auth";
 import { Button } from "@/components/ui/button";
 import ProfileDropdown from "./ProfileDropdown";
@@ -168,9 +168,10 @@ function NavBar() {
                 </Link>
                 <Link
                   href="/agents"
-                  className="text-[#61758a] hover:text-[#121417] text-sm"
+                  className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-cyan-400 via-violet-500 to-fuchsia-500 px-5 py-2 text-sm font-medium text-white shadow-md shadow-fuchsia-500/30 hover:opacity-95 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                 >
-                  Agents
+                  <Sparkles className="h-4 w-4" />
+                  AI Study Agent
                 </Link>
                 {/* <Link
                   href="/explore"
@@ -309,9 +310,10 @@ function NavBar() {
               </Link>
               <Link
                 href="/agents"
-                className="text-[#61758a] hover:text-[#121417] text-sm py-2.5 hover:bg-gray-100 rounded-md px-3"
+                className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-cyan-400 via-violet-500 to-fuchsia-500 px-5 py-2 text-sm font-medium text-white shadow-md shadow-fuchsia-500/30 hover:opacity-95 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               >
-                Agents
+                <Sparkles className="h-4 w-4" />
+                AI Study Agent
               </Link>
               {/* <Link
                 href="/explore"
