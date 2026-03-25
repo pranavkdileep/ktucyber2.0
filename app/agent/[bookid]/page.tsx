@@ -426,14 +426,19 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
                 </Link>
               </div>
             </div>
-            <div className="inline-flex items-center gap-2 self-start rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-slate-100">
+            <button
+              type="submit"
+              form="agent-prompt-form"
+              disabled={isStreaming || !query.trim() || !bookid}
+              className="inline-flex items-center justify-center gap-2 self-start rounded-2xl bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               {isStreaming ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (
-                <Sparkles className="h-4 w-4" />
+                <Send className="h-4 w-4" />
               )}
-              Stage: {stageLabel}
-            </div>
+              {isStreaming ? "Generating..." : "Generate Study Note"}
+            </button>
           </div>
         </section>
 
@@ -451,7 +456,7 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <form id="agent-prompt-form" onSubmit={handleSubmit} className="mt-5 space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Book ID
@@ -477,18 +482,14 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={isStreaming || !query.trim() || !bookid}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-              >
+              <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-700">
                 {isStreaming ? (
                   <LoaderCircle className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Sparkles className="h-4 w-4 text-sky-600" />
                 )}
-                {isStreaming ? "Generating..." : "Generate Study Note"}
-              </button>
+                Stage: {stageLabel}
+              </div>
             </form>
 
             {error && (
