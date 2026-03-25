@@ -2,7 +2,15 @@
 
 import MarkdownPreview, { markdownToHtml } from "@/components/agent/MarkdownPreview";
 import Link from "next/link";
-import { ArrowLeft, Bot, Download, LoaderCircle, Send, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Bot,
+  Download,
+  LoaderCircle,
+  MessageCircle,
+  Send,
+  Sparkles,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface AgentChatPageProps {
@@ -43,6 +51,8 @@ function parseEventPayload(rawValue: string) {
     return null;
   }
 }
+
+const WHATSAPP_SUPPORT_URL = "https://wa.link/tqw7p5";
 
 async function consumeEventStream(
   stream: ReadableStream<Uint8Array>,
@@ -396,11 +406,25 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
         <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-sky-900 px-6 py-8 text-white shadow-lg">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-sky-200">Agent Chat</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-sky-200">Agent Chat [BETA]</p>
               <h1 className="mt-2 break-all text-3xl font-bold">{bookid || "Loading..."}</h1>
               <p className="mt-3 max-w-2xl text-sm text-slate-200">
                 Ask this book agent for study notes, summaries, or topic explanations and watch the PDF response in live.
               </p>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <p className="text-sm text-slate-200">
+                  Facing rendering issues or need a new agent added?
+                </p>
+                <Link
+                  href={WHATSAPP_SUPPORT_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-400"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Contact on WhatsApp
+                </Link>
+              </div>
             </div>
             <div className="inline-flex items-center gap-2 self-start rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-slate-100">
               {isStreaming ? (

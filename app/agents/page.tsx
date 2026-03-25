@@ -2,11 +2,12 @@
 
 import { listAgents } from "@/actions/agent";
 import Link from "next/link";
-import { Bot, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight, MessageCircle, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const PAGE_SIZE = 12;
+const WHATSAPP_SUPPORT_URL = "https://wa.link/tqw7p5";
 
 export default function AgentsPage() {
   const router = useRouter();
@@ -66,15 +67,31 @@ export default function AgentsPage() {
     <main className="min-h-screen bg-slate-50">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         <section className="rounded-3xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-6 py-8 text-white shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-white/15 p-3">
-              <Bot className="h-7 w-7" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Study Agents</h1>
-              <p className="mt-2 max-w-2xl text-sm text-white/90">
-                Pick a book agent, ask a question, and generate structured study notes in PDF Format.
-              </p>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="rounded-2xl bg-white/15 p-3">
+                <Bot className="h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Study Agents [BETA]</h1>
+                <p className="mt-2 max-w-2xl text-sm text-white/90">
+                  Pick a book agent, ask a question, and generate structured study notes in PDF Format.
+                </p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <p className="text-sm text-white/90">
+                    Need a new subject or agent added?
+                  </p>
+                  <Link
+                    href={WHATSAPP_SUPPORT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-400"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Contact on WhatsApp
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
