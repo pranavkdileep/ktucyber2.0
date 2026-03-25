@@ -426,19 +426,6 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
                 </Link>
               </div>
             </div>
-            <button
-              type="submit"
-              form="agent-prompt-form"
-              disabled={isStreaming || !query.trim() || !bookid}
-              className="inline-flex items-center justify-center gap-2 self-start rounded-2xl bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isStreaming ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              {isStreaming ? "Generating..." : "Generate Study Note"}
-            </button>
           </div>
         </section>
 
@@ -482,14 +469,23 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
                 />
               </div>
 
-              <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-700">
-                {isStreaming ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4 text-sky-600" />
-                )}
-                Stage: {stageLabel}
-              </div>
+              <button
+                type="submit"
+                disabled={isStreaming || !query.trim() || !bookid}
+                className="inline-flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {isStreaming ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {isStreaming ? "Generating..." : "Generate Study Note"}
+                </span>
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">
+                  {stageLabel}
+                </span>
+              </button>
             </form>
 
             {error && (
