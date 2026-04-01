@@ -42,13 +42,24 @@ function resolveImageUrl(src: string) {
   return new URL(src, AGENT_API_BASE).toString();
 }
 
+function shouldUseImageProxy(imageUrl: string) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.location.protocol === "https:" && imageUrl.startsWith("http://");
+}
+
 function replaceImageTags(markdown: string, items: AgentImageItem[]) {
   return items.reduce((content, item) => {
     const imageTagPattern = new RegExp(
       `<image\\s+id=(?:"|')?${item.figure_id}(?:"|')?\\s*/?>`,
       "gi"
     );
-    const normalizedUrl = resolveImageUrl(item.image_url);
+    const resolvedUrl = resolveImageUrl(item.image_url);
+    const normalizedUrl = shouldUseImageProxy(resolvedUrl)
+      ? `/api/agent/image?src=${encodeURIComponent(resolvedUrl)}`
+      : resolvedUrl;
     const replacement = `![${item.image_caption_text}](${normalizedUrl} "${item.image_caption_text}")`;
     return content.replace(imageTagPattern, replacement);
   }, markdown);
