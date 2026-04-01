@@ -31,14 +31,21 @@ interface StreamStatus {
   [key: string]: unknown;
 }
 
-function getProxiedImageUrl(src: string) {
-  return `/api/agent/image?src=${encodeURIComponent(src)}`;
+const AGENT_API_BASE =
+  process.env.NEXT_PUBLIC_AGENT_API_BASE || "http://127.0.0.1:8000";
+
+function resolveImageUrl(src: string) {
+  if (/^https?:\/\//i.test(src)) {
+    return src;
+  }
+
+  return new URL(src, AGENT_API_BASE).toString();
 }
 
 function replaceImageTags(markdown: string, items: AgentImageItem[]) {
   return items.reduce((content, item) => {
     const imageTagPattern = new RegExp(`<image id="${item.figure_id}">`, "g");
-    const normalizedUrl = getProxiedImageUrl(item.image_url);
+    const normalizedUrl = resolveImageUrl(item.image_url);
     const replacement = `![${item.image_caption_text}](${normalizedUrl} "${item.image_caption_text}")`;
     return content.replace(imageTagPattern, replacement);
   }, markdown);
