@@ -44,7 +44,10 @@ function resolveImageUrl(src: string) {
 
 function replaceImageTags(markdown: string, items: AgentImageItem[]) {
   return items.reduce((content, item) => {
-    const imageTagPattern = new RegExp(`<image id="${item.figure_id}">`, "g");
+    const imageTagPattern = new RegExp(
+      `<image\\s+id=(?:"|')?${item.figure_id}(?:"|')?\\s*/?>`,
+      "gi"
+    );
     const normalizedUrl = resolveImageUrl(item.image_url);
     const replacement = `![${item.image_caption_text}](${normalizedUrl} "${item.image_caption_text}")`;
     return content.replace(imageTagPattern, replacement);
@@ -146,7 +149,7 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
     }, 150);
   }, [isStreaming, status?.stage]);
 
-  const displayedMarkdown = finalAnswer || preview;
+  const displayedMarkdown = replaceImageTags(finalAnswer || preview, imageItems);
 
   const handleDownloadPdf = () => {
     if (!displayedMarkdown || typeof window === "undefined") {
@@ -381,7 +384,7 @@ export default function AgentChatPage({ params }: AgentChatPageProps) {
               : draftAnswer;
           const enrichedMarkdown = replaceImageTags(sourceMarkdown, currentImages);
           setFinalAnswer(enrichedMarkdown);
-          setPreview(enrichedMarkdown);
+          setPreview(sourceMarkdown);
           setStatus({ stage: "complete" });
         }
       });
